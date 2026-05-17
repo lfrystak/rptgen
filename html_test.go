@@ -64,8 +64,8 @@ func TestHtmlSmokeTest(t *testing.T) {
 	if !strings.Contains(out, "new Chart(") {
 		t.Error("output must contain 'new Chart('")
 	}
-	if strings.Contains(out, "cdn.jsdelivr.net") {
-		t.Error("output must not reference cdn.jsdelivr.net")
+	if !strings.Contains(out, "cdn.jsdelivr.net") {
+		t.Error("output must reference cdn.jsdelivr.net for Chart.js")
 	}
 }
 
