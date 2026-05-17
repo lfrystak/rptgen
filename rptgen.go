@@ -43,6 +43,7 @@ func NewReport(title string) *Report {
 	return &Report{
 		Title:       title,
 		GeneratedAt: time.Now(),
+		Sections:    []*Section{},
 	}
 }
 
