@@ -1,16 +1,12 @@
 package rptgen
 
 import (
-	_ "embed"
 	"encoding/json"
 	"fmt"
 	"html"
 	"sort"
 	"strings"
 )
-
-//go:embed assets/chartjs/chart.umd.min.js
-var chartJSSource string
 
 var defaultChartColors = []string{
 	"#2563eb", "#10b981", "#f59e0b", "#ef4444",
@@ -79,10 +75,7 @@ func (h HtmlRenderer) Render(report *Report, theme *Theme) (string, error) {
 
 	b.WriteString("  </div>\n\n")
 
-	// Embed Chart.js
-	b.WriteString("  <script>\n")
-	b.WriteString(chartJSSource)
-	b.WriteString("\n  </script>\n")
+	b.WriteString("  <script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>\n")
 
 	// Chart init scripts
 	if len(chartScripts) > 0 {
