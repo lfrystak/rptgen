@@ -36,8 +36,8 @@ func main() {
     report.Footer = "Internal use only"
 
     section := &rptgen.Section{Title: "KPIs", ColumnWidths: []int{1, 1}}
-    section.AddElement(&rptgen.NumberTile{Title: "Revenue", Value: 98000, Format: "C0"})
-    section.AddElement(&rptgen.NumberTile{Title: "Growth", Value: 0.12, Format: "P1"})
+    section.AddElement(&rptgen.NumberTile{Title: "Revenue", Value: 98000, Format: "%.0f", Prefix: "$", ThousandsSep: true})
+    section.AddElement(&rptgen.NumberTile{Title: "Growth", Value: 12.0, Format: "%.1f%%"})
     report.AddSection(section)
 
     html, err := rptgen.HtmlRenderer{}.Render(report, nil) // nil = default theme
@@ -61,13 +61,11 @@ The top-level document container. Created with `NewReport(title)`.
 | `GeneratedAt` | `time.Time` | Timestamp shown in the header. Set automatically by `NewReport`. |
 | `Footer`      | `string`   | Text shown at the bottom of the page.            |
 | `LogoURL`     | `string`   | URL of a logo image rendered above the title.    |
-| `Locale`      | `string`   | BCP 47 locale tag (e.g. `"en-US"`). Used for number formatting hints. |
 
 ```go
 report := rptgen.NewReport("Q2 Report")
 report.LogoURL = "https://example.com/logo.png"
 report.Footer  = "Confidential"
-report.Locale  = "en-US"
 ```
 
 ### `Section`
@@ -98,28 +96,20 @@ report.AddSection(section)
 
 Displays a single numeric metric.
 
-| Field      | Type      | Description                                                              |
-|------------|-----------|--------------------------------------------------------------------------|
-| `Title`    | `string`  | Label above the value.                                                   |
-| `Value`    | `float64` | The numeric value to display.                                            |
-| `Format`   | `string`  | Formatting pattern (see table below). Empty = raw number.                |
-| `Subtitle` | `string`  | Small caption below the value (e.g. `"↑ vs last month"`).               |
-| `Tooltip`  | `string`  | Hover text on the tile card.                                             |
-
-**Format patterns:**
-
-| Pattern      | Example output | Description                                          |
-|--------------|---------------|------------------------------------------------------|
-| `""`         | `1234.5`      | Raw `strconv.FormatFloat` output.                    |
-| `"N"` / `"N2"` | `1234.50`  | Fixed-point. Digit after `N` = decimal places (default 2). |
-| `"C"` / `"C0"` | `$1,234`   | Currency with `$` prefix and thousands separator. Digit = decimal places. |
-| `"P"` / `"P1"` | `12.0%`    | Percentage. Value is multiplied by 100. Digit = decimal places. |
-| `fmt` verb  | `1.23e+03`    | Any `fmt.Sprintf` format string, e.g. `"%.2e"`.     |
+| Field          | Type      | Description                                                              |
+|----------------|-----------|--------------------------------------------------------------------------|
+| `Title`        | `string`  | Label above the value.                                                   |
+| `Value`        | `float64` | The numeric value to display.                                            |
+| `Format`       | `string`  | `fmt.Sprintf` format string, e.g. `"%.2f"`, `"%.1f%%"`. Empty = raw number. |
+| `Prefix`       | `string`  | String prepended to the formatted value, e.g. `"$"`, `"€"`.            |
+| `ThousandsSep` | `bool`    | Insert comma thousands separators into the integer part.                 |
+| `Subtitle`     | `string`  | Small caption below the value (e.g. `"↑ vs last month"`).               |
+| `Tooltip`      | `string`  | Hover text on the tile card.                                             |
 
 ```go
-&rptgen.NumberTile{Title: "Revenue",  Value: 98000, Format: "C0"}
-&rptgen.NumberTile{Title: "Growth",   Value: 0.12,  Format: "P1", Subtitle: "↑ vs Q1"}
-&rptgen.NumberTile{Title: "Score",    Value: 4.7,   Format: "N1", Tooltip: "Out of 5"}
+&rptgen.NumberTile{Title: "Revenue", Value: 98000, Format: "%.0f", Prefix: "$", ThousandsSep: true}
+&rptgen.NumberTile{Title: "Growth",  Value: 12.0,  Format: "%.1f%%", Subtitle: "↑ vs Q1"}
+&rptgen.NumberTile{Title: "Score",   Value: 4.7,   Format: "%.1f",   Tooltip: "Out of 5"}
 ```
 
 #### `DateTile`
@@ -193,7 +183,7 @@ A flexible sub-grid container that nests elements inside a section column.
 
 ```go
 canvas := rptgen.NewCanvas(rptgen.EqualColumns(2)...) // two equal columns
-canvas.AddElement(&rptgen.NumberTile{Title: "Users", Value: 500, Format: "N0"})
+canvas.AddElement(&rptgen.NumberTile{Title: "Users", Value: 500, Format: "%.0f", ThousandsSep: true})
 canvas.AddElement(rptgen.NewBarChart("Trend", data))
 
 section := &rptgen.Section{ColumnWidths: []int{1, 2}}

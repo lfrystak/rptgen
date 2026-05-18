@@ -35,7 +35,6 @@ type Report struct {
 	GeneratedAt time.Time
 	Footer      string
 	LogoURL     string
-	Locale      string // e.g. "en-US", "de-DE", "" = invariant
 }
 
 // NewReport returns a Report with GeneratedAt set to the current time.

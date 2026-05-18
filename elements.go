@@ -11,59 +11,45 @@ import (
 // NumberTile displays a single numeric metric.
 type NumberTile struct {
 	BaseElement
-	Title    string
-	Value    float64
-	Format   string // Go fmt verb or pattern: "", "N"/"N2", "C"/"C0", "P"/"P1", or fmt.Sprintf pattern
-	Subtitle string
-	Tooltip  string
+	Title        string
+	Value        float64
+	Format       string // fmt.Sprintf format, e.g. "%.2f", "%.0f", "%.1f%%". Empty = raw float.
+	Prefix       string // prepended to the formatted value, e.g. "$", "€"
+	ThousandsSep bool   // insert comma thousands separator into the integer part
+	Subtitle     string
+	Tooltip      string
 }
 
 func (n *NumberTile) ElementType() string { return "NumberTile" }
 
-// FormatValue returns the display string for Value using Format and locale.
-// locale is the Report.Locale string (empty = invariant).
-func (n *NumberTile) FormatValue(locale string) string {
+func (n *NumberTile) FormatValue() string {
+	var s string
 	if n.Format == "" {
-		return strconv.FormatFloat(n.Value, 'f', -1, 64)
+		s = strconv.FormatFloat(n.Value, 'f', -1, 64)
+	} else {
+		s = fmt.Sprintf(n.Format, n.Value)
 	}
-	upper := strings.ToUpper(n.Format)
-	if len(upper) >= 1 {
-		prefix := upper[0]
-		if prefix == 'N' || prefix == 'C' || prefix == 'P' {
-			decimals := 2
-			if len(upper) > 1 {
-				if d, err := strconv.Atoi(upper[1:]); err == nil {
-					decimals = d
-				}
-			}
-			switch prefix {
-			case 'N':
-				return fmt.Sprintf("%."+strconv.Itoa(decimals)+"f", n.Value)
-			case 'C':
-				return "$" + formatWithThousands(n.Value, decimals)
-			case 'P':
-				return fmt.Sprintf("%."+strconv.Itoa(decimals)+"f%%", n.Value*100)
-			}
-		}
+	if n.ThousandsSep {
+		s = addThousandsSep(s)
 	}
-	return fmt.Sprintf(n.Format, n.Value)
+	if n.Prefix != "" {
+		s = n.Prefix + s
+	}
+	return s
 }
 
-// formatWithThousands formats v with the given decimal places and comma-separated thousands.
-func formatWithThousands(v float64, decimals int) string {
-	s := fmt.Sprintf("%."+strconv.Itoa(decimals)+"f", v)
+// addThousandsSep inserts comma thousands separators into the integer part of a formatted number string.
+func addThousandsSep(s string) string {
+	neg := false
+	if len(s) > 0 && s[0] == '-' {
+		neg = true
+		s = s[1:]
+	}
 	dot := strings.Index(s, ".")
 	intPart, fracPart := s, ""
 	if dot >= 0 {
 		intPart, fracPart = s[:dot], s[dot:]
 	}
-
-	neg := false
-	if len(intPart) > 0 && intPart[0] == '-' {
-		neg = true
-		intPart = intPart[1:]
-	}
-
 	var b strings.Builder
 	for i, ch := range intPart {
 		if i > 0 && (len(intPart)-i)%3 == 0 {
@@ -71,12 +57,11 @@ func formatWithThousands(v float64, decimals int) string {
 		}
 		b.WriteRune(ch)
 	}
-
-	result := b.String()
+	result := b.String() + fracPart
 	if neg {
-		result = "-" + result
+		return "-" + result
 	}
-	return result + fracPart
+	return result
 }
 
 // DateTile displays a date or datetime metric.

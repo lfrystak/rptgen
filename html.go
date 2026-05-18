@@ -59,7 +59,7 @@ func (h HtmlRenderer) Render(report *Report, theme *Theme) (string, error) {
 		fmt.Fprintf(&b, "      <div class=\"section-grid\" style=\"--col-template: %s\">\n", colTemplate)
 		for _, elem := range section.Elements {
 			b.WriteString("        <div class=\"element-wrapper\">\n")
-			rendered, scripts := renderElement(elem, report, theme)
+			rendered, scripts := renderElement(elem, theme)
 			b.WriteString(rendered)
 			chartScripts = append(chartScripts, scripts...)
 			b.WriteString("        </div>\n")
@@ -104,10 +104,10 @@ func columnWidthsToCSS(widths []int) string {
 }
 
 // renderElement dispatches to the correct element renderer and returns HTML + any chart init scripts.
-func renderElement(elem Element, report *Report, theme *Theme) (string, []string) {
+func renderElement(elem Element, theme *Theme) (string, []string) {
 	switch e := elem.(type) {
 	case *NumberTile:
-		return renderNumberTile(e, report), nil
+		return renderNumberTile(e), nil
 	case *DateTile:
 		return renderDateTile(e), nil
 	case *FreeText:
@@ -115,7 +115,7 @@ func renderElement(elem Element, report *Report, theme *Theme) (string, []string
 	case *Table:
 		return renderTable(e), nil
 	case *Canvas:
-		return renderCanvas(e, report, theme)
+		return renderCanvas(e, theme)
 	case *BarChart:
 		script := renderBarChartScript(e, theme)
 		return renderChartContainer(e.elementID(), e.Title, e.Tooltip), []string{script}
@@ -133,12 +133,12 @@ func renderElement(elem Element, report *Report, theme *Theme) (string, []string
 	}
 }
 
-func renderNumberTile(e *NumberTile, report *Report) string {
+func renderNumberTile(e *NumberTile) string {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element tile number-tile\">\n")
 	b.WriteString(tooltipIcon(e.Tooltip))
 	fmt.Fprintf(&b, "            <div class=\"tile-title\">%s</div>\n", html.EscapeString(e.Title))
-	fmt.Fprintf(&b, "            <div class=\"tile-value\">%s</div>\n", html.EscapeString(e.FormatValue(report.Locale)))
+	fmt.Fprintf(&b, "            <div class=\"tile-value\">%s</div>\n", html.EscapeString(e.FormatValue()))
 	if e.Subtitle != "" {
 		fmt.Fprintf(&b, "            <div class=\"tile-subtitle\">%s</div>\n", html.EscapeString(e.Subtitle))
 	}
@@ -199,14 +199,14 @@ func renderTable(e *Table) string {
 	return b.String()
 }
 
-func renderCanvas(e *Canvas, report *Report, theme *Theme) (string, []string) {
+func renderCanvas(e *Canvas, theme *Theme) (string, []string) {
 	colTemplate := columnWidthsToCSS(e.ColumnWidths)
 	var b strings.Builder
 	var allScripts []string
 	fmt.Fprintf(&b, "          <div class=\"element canvas-grid\" style=\"--col-template: %s\">\n", colTemplate)
 	for _, child := range e.Elements {
 		b.WriteString("            <div class=\"element-wrapper\">\n")
-		rendered, scripts := renderElement(child, report, theme)
+		rendered, scripts := renderElement(child, theme)
 		b.WriteString(rendered)
 		allScripts = append(allScripts, scripts...)
 		b.WriteString("            </div>\n")

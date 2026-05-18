@@ -12,10 +12,12 @@ func buildFullReport() *Report {
 	section := &Section{Title: "All Elements"}
 
 	section.AddElement(&NumberTile{
-		BaseElement: newBaseElement(),
-		Title:       "Revenue",
-		Value:       99999.99,
-		Format:      "C2",
+		BaseElement:  newBaseElement(),
+		Title:        "Revenue",
+		Value:        99999.99,
+		Format:       "%.2f",
+		Prefix:       "$",
+		ThousandsSep: true,
 	})
 	section.AddElement(&DateTile{
 		BaseElement: newBaseElement(),

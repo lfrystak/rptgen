@@ -47,34 +47,35 @@ func main() {
 	// Build the report
 	report := rptgen.NewReport("Q2 2024 Business Performance Report")
 	report.LogoURL = "https://raw.githubusercontent.com/lfrystak/rptgen/refs/heads/main/img/rptgen_logo_compact.svg"
-	report.Locale = "en-US"
 	report.Footer = "Confidential - Internal Use Only"
 
 	// Section: Key Metrics
 	kpis := &rptgen.Section{Title: "Key Metrics", ColumnWidths: rptgen.EqualColumns(4)}
 	kpis.AddElement(&rptgen.NumberTile{
-		Title:   "Total Revenue",
-		Value:   432000,
-		Format:  "C0",
-		Tooltip: "Total revenue from all regions and product lines for Q2 2024",
+		Title:        "Total Revenue",
+		Value:        432000,
+		Format:       "%.0f",
+		Prefix:       "$ ",
+		ThousandsSep: true,
+		Tooltip:      "Total revenue from all regions and product lines for Q2 2024",
 	})
 	kpis.AddElement(&rptgen.NumberTile{
 		Title:   "New Customers",
 		Value:   47,
-		Format:  "N0",
+		Format:  "%.0f",
 		Tooltip: "Number of new customer accounts opened during this quarter",
 	})
 	kpis.AddElement(&rptgen.NumberTile{
 		Title:    "Growth Rate",
-		Value:    0.198,
-		Format:   "P1",
+		Value:    19.8,
+		Format:   "%.1f%%",
 		Subtitle: "↑ vs Q1",
 		Tooltip:  "Year-over-year growth compared to the same quarter last year",
 	})
 	kpis.AddElement(&rptgen.NumberTile{
 		Title:    "Customer Satisfaction",
 		Value:    4.7,
-		Format:   "N1",
+		Format:   "%.1f",
 		Subtitle: "out of 5.0",
 	})
 	report.AddSection(kpis)
@@ -143,11 +144,11 @@ func main() {
 	canvas.AddElement(&rptgen.NumberTile{
 		Title:    "Canvas Demo",
 		Value:    100,
-		Format:   "N0",
+		Format:   "%.0f",
 		Subtitle: "This is in a canvas!",
 	})
 	canvas.AddElement(rptgen.NewBarChart("Sample Chart", map[string]float64{"A": 10, "B": 20, "C": 15}))
-	canvas.AddElement(&rptgen.NumberTile{Title: "Another Tile", Value: 42, Format: "N0"})
+	canvas.AddElement(&rptgen.NumberTile{Title: "Another Tile", Value: 42, Format: "%.0f"})
 	canvas.AddElement(&rptgen.DateTile{
 		Title:  "Today",
 		Value:  time.Now(),

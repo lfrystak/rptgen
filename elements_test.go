@@ -9,23 +9,24 @@ import (
 
 func TestNumberTileFormatValue(t *testing.T) {
 	cases := []struct {
-		name   string
-		value  float64
-		format string
-		want   string
+		name string
+		tile NumberTile
+		want string
 	}{
-		{"empty format", 42.5, "", "42.5"},
-		{"N2 two decimals", 1234.5, "N2", "1234.50"},
-		{"C0 currency no decimals", 1500, "C0", "$1,500"},
-		{"P1 percentage 1 decimal", 0.753, "P1", "75.3%"},
-		{"custom sprintf", 3.14159, "%.4f", "3.1416"},
+		{"empty format", NumberTile{Value: 42.5}, "42.5"},
+		{"fmt format two decimals", NumberTile{Value: 1234.5, Format: "%.2f"}, "1234.50"},
+		{"thousands separator", NumberTile{Value: 1234.5, Format: "%.2f", ThousandsSep: true}, "1,234.50"},
+		{"currency with prefix and thousands", NumberTile{Value: 1500, Format: "%.0f", Prefix: "$", ThousandsSep: true}, "$1,500"},
+		{"percentage via fmt pattern", NumberTile{Value: 75.3, Format: "%.1f%%"}, "75.3%"},
+		{"custom sprintf", NumberTile{Value: 3.14159, Format: "%.4f"}, "3.1416"},
+		{"negative with thousands", NumberTile{Value: -1234.5, Format: "%.2f", ThousandsSep: true}, "-1,234.50"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			n := &NumberTile{BaseElement: newBaseElement(), Value: tc.value, Format: tc.format}
-			got := n.FormatValue("")
+			tc.tile.BaseElement = newBaseElement()
+			got := tc.tile.FormatValue()
 			if got != tc.want {
-				t.Errorf("FormatValue(%q, %v): got %q, want %q", tc.format, tc.value, got, tc.want)
+				t.Errorf("got %q, want %q", got, tc.want)
 			}
 		})
 	}
