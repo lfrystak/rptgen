@@ -73,11 +73,11 @@ type chartDataset struct {
 // JSON output, allowing new chart types to inject options (e.g. custom scales)
 // without modifying this struct.
 type chartOptions struct {
-	Responsive  bool          `json:"responsive"`
-	AspectRatio *float64      `json:"aspectRatio,omitempty"`
-	IndexAxis   string        `json:"indexAxis,omitempty"`
-	Plugins     *chartPlugins `json:"plugins,omitempty"`
-	Scales      *chartScales  `json:"scales,omitempty"`
+	Responsive  bool           `json:"responsive"`
+	AspectRatio *float64       `json:"aspectRatio,omitempty"`
+	IndexAxis   string         `json:"indexAxis,omitempty"`
+	Plugins     *chartPlugins  `json:"plugins,omitempty"`
+	Scales      *chartScales   `json:"scales,omitempty"`
 	Extra       map[string]any `json:"-"`
 }
 
