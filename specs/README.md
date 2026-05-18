@@ -6,7 +6,7 @@ column as work progresses: `🔜 Not started` · `🔄 In progress` · `✅ Done
 
 | ID | Title | Severity | Status |
 |----|-------|----------|--------|
-| [001](001-charts-not-self-contained.md) | Reports are not self-contained: Chart.js loaded from CDN | Critical | 🔜 Not started |
+| [001](001-charts-not-self-contained.md) | Reports are not self-contained: Chart.js loaded from CDN | Critical | ✅ Done |
 | [002](002-script-context-injection.md) | User data can break out of the `<script>` block (XSS / corruption) | Critical | 🔜 Not started |
 | [003](003-chart-data-ordering.md) | Chart category ordering destroyed by `map` + alphabetical sort | Critical | 🔜 Not started |
 | [004](004-error-handling.md) | Library panics on bad input, swallows errors, returns always-nil error | Important | 🔜 Not started |

@@ -19,6 +19,7 @@ type docData struct {
 	GeneratedAt  string
 	Footer       string
 	Sections     []template.HTML
+	ChartJS      template.JS
 	ChartScripts []template.JS
 }
 
@@ -53,8 +54,8 @@ var docTemplate = template.Must(template.New("doc").Parse(`<!DOCTYPE html>
 {{end -}}
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {{- if .ChartScripts}}
+  <script>{{.ChartJS}}</script>
   <script>
 {{- range .ChartScripts}}
   {{.}}
@@ -95,6 +96,7 @@ func (h HtmlRenderer) Render(report *Report, theme *Theme) (string, error) {
 		GeneratedAt:  generatedAt,
 		Footer:       report.Footer,
 		Sections:     sections,
+		ChartJS:      template.JS(chartJSSource),
 		ChartScripts: chartScripts,
 	}
 

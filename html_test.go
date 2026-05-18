@@ -137,8 +137,40 @@ func TestHtmlSmokeTest(t *testing.T) {
 	if !strings.Contains(out, "new Chart(") {
 		t.Error("output must contain 'new Chart('")
 	}
-	if !strings.Contains(out, "cdn.jsdelivr.net") {
-		t.Error("output must reference cdn.jsdelivr.net for Chart.js")
+	if strings.Contains(out, "cdn.jsdelivr.net") {
+		t.Error("output must not reference cdn.jsdelivr.net — Chart.js must be inlined")
+	}
+	if !strings.Contains(out, chartJSSource[:64]) {
+		t.Error("output must contain inlined Chart.js source")
+	}
+}
+
+// TestNoExternalReferences verifies that a report without a LogoURL contains
+// no external resource-loading attributes (src=, href=, @import) pointing at
+// http(s) URLs — the self-contained guarantee.
+// URLs that appear inside inlined JavaScript source (comments, string literals)
+// are not network requests and are not checked here.
+// LogoURL is the one user-controlled exception and is documented as such.
+func TestNoExternalReferences(t *testing.T) {
+	r := buildFullReport()
+	r.LogoURL = "" // no user-supplied URLs
+	out, err := HtmlRenderer{}.Render(r, nil)
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	// Patterns that cause a browser to make a network request.
+	patterns := []string{
+		`src="http://`, `src="https://`,
+		`src='http://`, `src='https://`,
+		`href="http://`, `href="https://`,
+		`href='http://`, `href='https://`,
+		`@import "http`, `@import 'http`,
+		`@import url(http`,
+	}
+	for _, p := range patterns {
+		if strings.Contains(out, p) {
+			t.Errorf("output contains external resource reference %q", p)
+		}
 	}
 }
 
