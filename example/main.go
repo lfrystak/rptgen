@@ -137,9 +137,9 @@ func main() {
 	))
 	report.AddSection(customers)
 
-	// Section: Canvas Example - Mixed Layout (1:2 ratio)
-	canvasSection := &rptgen.Section{Title: "Canvas Example - Mixed Layout", ColumnWidths: []int{1, 2}}
-	canvas := rptgen.NewCanvas(1, 1)
+	// Section: Canvas Example - Mixed Layout (2:1 ratio)
+	canvasSection := &rptgen.Section{Title: "Canvas Example - Mixed Layout", ColumnWidths: []int{3, 2}}
+	canvas := rptgen.NewCanvas(1, 3)
 	canvas.AddElement(&rptgen.NumberTile{
 		Title:    "Canvas Demo",
 		Value:    100,

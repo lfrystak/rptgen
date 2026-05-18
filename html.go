@@ -285,10 +285,11 @@ type chartDataset struct {
 }
 
 type chartOptions struct {
-	Responsive bool             `json:"responsive"`
-	IndexAxis  string           `json:"indexAxis,omitempty"`
-	Plugins    *chartPlugins    `json:"plugins,omitempty"`
-	Scales     *chartScales     `json:"scales,omitempty"`
+	Responsive  bool          `json:"responsive"`
+	AspectRatio *float64      `json:"aspectRatio,omitempty"`
+	IndexAxis   string        `json:"indexAxis,omitempty"`
+	Plugins     *chartPlugins `json:"plugins,omitempty"`
+	Scales      *chartScales  `json:"scales,omitempty"`
 }
 
 type chartPlugins struct {
@@ -324,6 +325,7 @@ func renderBarChartScript(e *BarChart, theme *Theme) string {
 		indexAxis = "y"
 	}
 
+	ratio := 2.0
 	cfg := chartConfig{
 		Type: chartType,
 		Data: chartData{
@@ -331,8 +333,10 @@ func renderBarChartScript(e *BarChart, theme *Theme) string {
 			Datasets: []chartDataset{{Data: data, BackgroundColor: bgColors}},
 		},
 		Options: chartOptions{
-			Responsive: true,
-			IndexAxis:  indexAxis,
+			Responsive:  true,
+			AspectRatio: &ratio,
+			IndexAxis:   indexAxis,
+			Plugins:     &chartPlugins{Legend: &chartLegend{Display: false}},
 		},
 	}
 	return chartInitScript(e.elementID(), cfg)
@@ -377,12 +381,14 @@ func renderLineChartScript(e *LineChart, theme *Theme) string {
 		datasets[i] = ds
 	}
 
+	ratio := 2.0
 	cfg := chartConfig{
 		Type: "line",
 		Data: chartData{Labels: labels, Datasets: datasets},
 		Options: chartOptions{
-			Responsive: true,
-			Plugins:    &chartPlugins{Legend: &chartLegend{Display: len(e.Series) > 1}},
+			Responsive:  true,
+			AspectRatio: &ratio,
+			Plugins:     &chartPlugins{Legend: &chartLegend{Display: len(e.Series) > 1}},
 		},
 	}
 	return chartInitScript(e.elementID(), cfg)
@@ -403,13 +409,14 @@ func renderPieChartScript(e *PieChart, theme *Theme) string {
 		chartType = "doughnut"
 	}
 
+	ratio := 2.0
 	cfg := chartConfig{
 		Type: chartType,
 		Data: chartData{
 			Labels:   labels,
 			Datasets: []chartDataset{{Data: data, BackgroundColor: bgColors}},
 		},
-		Options: chartOptions{Responsive: true},
+		Options: chartOptions{Responsive: true, AspectRatio: &ratio},
 	}
 	return chartInitScript(e.elementID(), cfg)
 }
@@ -454,13 +461,15 @@ func renderStackedBarChartScript(e *StackedBarChart, theme *Theme) string {
 		indexAxis = "y"
 	}
 
+	ratio := 2.0
 	cfg := chartConfig{
 		Type: "bar",
 		Data: chartData{Labels: labels, Datasets: datasets},
 		Options: chartOptions{
-			Responsive: true,
-			IndexAxis:  indexAxis,
-			Scales:     &chartScales{X: stacked, Y: stacked},
+			Responsive:  true,
+			AspectRatio: &ratio,
+			IndexAxis:   indexAxis,
+			Scales:      &chartScales{X: stacked, Y: stacked},
 		},
 	}
 	return chartInitScript(e.elementID(), cfg)
@@ -586,7 +595,6 @@ body {
 	b.WriteString(`.chart-container {
   padding: 1rem;
   position: relative;
-  height: 350px;
 }
 .element-title {
   font-size: 1rem;
