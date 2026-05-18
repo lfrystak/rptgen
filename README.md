@@ -6,6 +6,9 @@
 [![License: MIT](https://img.shields.io/github/license/lfrystak/rptgen)](LICENSE.txt)
 [![Latest Release](https://img.shields.io/github/v/release/lfrystak/rptgen)](https://github.com/lfrystak/rptgen/releases/latest)
 
+![image](img/rptgen_logo.svg)
+
+
 `rptgen` is a Go library for building structured, self-contained HTML reports. You compose a report from typed elements — tiles, tables, charts, and free text — arrange them into multi-column sections, and render everything to a single HTML file with no external dependencies.
 
 Reports are themed via a `Theme` struct that controls colors, fonts, shadows, and animations. A built-in default theme is provided; custom themes only require overriding the fields you care about.
