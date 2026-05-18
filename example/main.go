@@ -51,7 +51,7 @@ func main() {
 	report.Footer = "Confidential - Internal Use Only"
 
 	// Section: Key Metrics
-	kpis := &rptgen.Section{Title: "Key Metrics", ColumnWidths: []int{1, 1, 1, 1}}
+	kpis := &rptgen.Section{Title: "Key Metrics", ColumnWidths: rptgen.EqualColumns(4)}
 	kpis.AddElement(&rptgen.NumberTile{
 		Title:   "Total Revenue",
 		Value:   432000,

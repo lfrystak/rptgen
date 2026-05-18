@@ -81,6 +81,31 @@ func TestDefaultTheme(t *testing.T) {
 	}
 }
 
+func TestEqualColumns(t *testing.T) {
+	cases := []struct {
+		n    int
+		want []int
+	}{
+		{0, nil},
+		{-1, nil},
+		{1, []int{1}},
+		{3, []int{1, 1, 1}},
+		{4, []int{1, 1, 1, 1}},
+	}
+	for _, tc := range cases {
+		got := EqualColumns(tc.n)
+		if len(got) != len(tc.want) {
+			t.Errorf("EqualColumns(%d): got len %d, want len %d", tc.n, len(got), len(tc.want))
+			continue
+		}
+		for i, v := range got {
+			if v != 1 {
+				t.Errorf("EqualColumns(%d)[%d]: got %d, want 1", tc.n, i, v)
+			}
+		}
+	}
+}
+
 func TestColumnWidthsToCSS(t *testing.T) {
 	cases := []struct {
 		widths []int

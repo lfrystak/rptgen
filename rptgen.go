@@ -68,6 +68,19 @@ func (s *Section) AddElement(e Element) *Section {
 	return s
 }
 
+// EqualColumns returns a ColumnWidths slice of n equal proportional units.
+// EqualColumns(4) is shorthand for []int{1, 1, 1, 1}.
+func EqualColumns(n int) []int {
+	if n <= 0 {
+		return nil
+	}
+	cols := make([]int, n)
+	for i := range cols {
+		cols[i] = 1
+	}
+	return cols
+}
+
 // Theme controls the visual appearance of a rendered report.
 // Empty string fields mean "use default"; HtmlRenderer applies defaults at render time.
 type Theme struct {

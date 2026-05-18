@@ -77,8 +77,13 @@ A section groups elements into a CSS grid row.
 | `Elements`     | `[]Element` | Ordered list of elements in the section.                                   |
 | `ColumnWidths` | `[]int`    | Proportional column widths. `[]int{1, 2}` = 33 %/67 %. Nil = one column. |
 
+Use `EqualColumns(n)` to create n equal-width columns without spelling out the slice:
+
 ```go
+// Two equal columns — both are equivalent
+section := &rptgen.Section{Title: "Revenue", ColumnWidths: rptgen.EqualColumns(2)}
 section := &rptgen.Section{Title: "Revenue", ColumnWidths: []int{1, 1}}
+
 section.AddElement(chart1)
 section.AddElement(chart2)
 report.AddSection(section)
@@ -184,12 +189,12 @@ A flexible sub-grid container that nests elements inside a section column.
 | `Elements`     | `[]Element` | Elements placed inside the canvas grid.                                 |
 
 ```go
-canvas := rptgen.NewCanvas(1, 1) // two equal columns
+canvas := rptgen.NewCanvas(rptgen.EqualColumns(2)...) // two equal columns
 canvas.AddElement(&rptgen.NumberTile{Title: "Users", Value: 500, Format: "N0"})
 canvas.AddElement(rptgen.NewBarChart("Trend", data))
 
 section := &rptgen.Section{ColumnWidths: []int{1, 2}}
-section.AddElement(canvas)      // occupies the first (narrower) column
+section.AddElement(canvas)       // occupies the first (narrower) column
 section.AddElement(anotherChart) // occupies the second (wider) column
 ```
 
