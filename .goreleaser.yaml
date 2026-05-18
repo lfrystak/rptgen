@@ -21,9 +21,10 @@ changelog:
 
 release:
   footer: >-
-    **Full Changelog**: {{ .GitURL }}/compare/{{ .PreviousTag }}...{{ .Tag }}
+    🙏 Thank you for using {{ .ProjectName }}!
 
-    > `rptgen` is a Go library. Install it with:
-    > ```
-    > go get github.com/lfrystak/rptgen@{{ .Tag }}
-    > ```
+    ❓ Any questions or issues? Please open an issue at {{ .GitURL }}/issues.
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
