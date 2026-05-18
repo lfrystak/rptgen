@@ -1,0 +1,180 @@
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  font-family: {{.FontFamily}};
+  background-color: {{.BackgroundColor}};
+  color: {{.TextColor}};
+  margin: 0;
+  padding: 1rem;
+}
+.report {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+{{- if .EnableGradients}}
+.report-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid {{.PrimaryColor}};
+  background: linear-gradient(135deg, {{.PrimaryColor}}15 0%, transparent 100%);
+}
+{{- else}}
+.report-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid {{.PrimaryColor}};
+}
+{{- end}}
+.report-header img { max-height: 48px; }
+.report-title { margin: 0; color: {{.PrimaryColor}}; font-size: 1.5rem; }
+.report-generated { font-size: 0.8rem; color: {{.SecondaryColor}}; }
+.report-footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid {{.SecondaryColor}};
+  font-size: 0.85rem;
+  color: {{.SecondaryColor}};
+}
+.report-section { margin-bottom: 2rem; }
+.section-title {
+  font-size: 1.1rem;
+  color: {{.TextColor}};
+  margin-bottom: 1rem;
+  border-left: 4px solid {{.PrimaryColor}};
+  padding-left: 0.5rem;
+}
+.section-grid {
+  display: grid;
+  grid-template-columns: var(--col-template, 1fr);
+  gap: 1rem;
+}
+.canvas-grid {
+  display: grid;
+  grid-template-columns: var(--col-template, 1fr);
+  gap: 0.75rem;
+  padding: 0;
+}
+.element-wrapper {
+  background: {{.CardColor}};
+  border-radius: {{.BorderRadius}};
+  box-shadow: {{.Shadow}};
+  position: relative;
+}
+.tile {
+  padding: 1.5rem;
+  padding-top: 2rem;
+  text-align: center;
+  position: relative;
+}
+.tile-title {
+  font-size: 0.85rem;
+  color: {{.SecondaryColor}};
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.tile-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: {{.PrimaryColor}};
+  line-height: 1.2;
+}
+.tile-subtitle {
+  font-size: 0.8rem;
+  color: {{.SecondaryColor}};
+  margin-top: 0.25rem;
+}
+.chart-container {
+  padding: 1rem;
+  position: relative;
+}
+.element-title {
+  font-size: 1rem;
+  margin: 0 0 0.75rem;
+}
+.table-wrapper {
+  overflow-x: auto;
+  padding: 1rem;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+th {
+  background-color: {{.PrimaryColor}};
+  color: #ffffff;
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-weight: 600;
+}
+td {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid {{.TextColor}}20;
+}
+tbody tr:nth-child(even) td {
+  background-color: {{.TextColor}}08;
+}
+tbody tr:hover td {
+  background-color: {{.PrimaryColor}}15;
+}
+.free-text {
+  padding: 1rem 1.5rem;
+  line-height: 1.6;
+}
+.free-text p { margin: 0; }
+.tooltip-icon {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #9ca3af;
+  cursor: help;
+  z-index: 10;
+}
+.tooltip-icon:hover { color: #6b7280; }
+.tooltip-icon::after {
+  content: attr(data-tooltip);
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  right: 0;
+  min-width: 180px;
+  max-width: 280px;
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  white-space: normal;
+  line-height: 1.4;
+  z-index: 200;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.tooltip-icon:hover::after { display: block; }
+{{- if .EnableAnimations}}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.element-wrapper {
+  animation: fadeIn 0.3s ease;
+}
+{{- end}}
+@media (max-width: 768px) {
+  .section-grid, .canvas-grid { grid-template-columns: 1fr !important; }
+}
+@media print {
+  .element-wrapper { box-shadow: none !important; animation: none !important; }
+  .section-grid, .canvas-grid { grid-template-columns: 1fr !important; }
+}
