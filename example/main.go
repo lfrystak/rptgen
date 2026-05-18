@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	dateFormat = "January 02, 2006"
+	dateFormat = "2. 1. 2006"
 )
 
 func main() {
@@ -156,7 +156,7 @@ func main() {
 	canvas.AddElement(&rptgen.DateTile{
 		Title:  "Today",
 		Value:  time.Now(),
-		Format: "dateFormat",
+		Format: dateFormat,
 	})
 	canvasSection.AddElement(canvas)
 	canvasSection.AddElement(func() rptgen.Element {
