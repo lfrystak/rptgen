@@ -46,7 +46,7 @@ func main() {
 
 	// Build the report
 	report := rptgen.NewReport("Q2 2024 Business Performance Report")
-	report.LogoURL = "https://via.placeholder.com/150x50/2563eb/ffffff?text=MyCompany"
+	report.LogoURL = "https://raw.githubusercontent.com/lfrystak/rptgen/refs/heads/main/img/rptgen_logo_compact.svg"
 	report.Locale = "en-US"
 	report.Footer = "Confidential - Internal Use Only"
 
