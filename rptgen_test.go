@@ -1,6 +1,7 @@
 package rptgen
 
 import (
+	"os/exec"
 	"testing"
 	"time"
 )
@@ -103,6 +104,13 @@ func TestEqualColumns(t *testing.T) {
 				t.Errorf("EqualColumns(%d)[%d]: got %d, want 1", tc.n, i, v)
 			}
 		}
+	}
+}
+
+func TestExampleBuilds(t *testing.T) {
+	cmd := exec.Command("go", "build", "-o", "/dev/null", "./example/...")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("example/... failed to build: %v\n%s", err, out)
 	}
 }
 

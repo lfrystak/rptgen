@@ -21,7 +21,7 @@ column as work progresses: `🔜 Not started` · `🔄 In progress` · `✅ Done
 | [013](013-documentation-drift.md) | README documents behaviour the code does not implement | Important | 🔜 Not started |
 | [014](014-dead-theme-fields.md) | Dead/misleading `Theme` fields: `AccentColor`, `EnableGradients` | Important | 🔜 Not started |
 | [015](015-html-monolith-refactor.md) | `html.go` is a 765-line monolith mixing five concerns | Important | 🔜 Not started |
-| [016](016-test-quality.md) | Tests are smoke-level; key paths uncovered | Important | 🔜 Not started |
+| [016](016-test-quality.md) | Tests are smoke-level; key paths uncovered | Important | ✅ Done |
 | [017](017-package-godoc.md) | No package-level documentation (godoc / pkg.go.dev) | Nice-to-have | 🔜 Not started |
 | [018](018-html-accessibility-quality.md) | Generated HTML has accessibility / quality gaps | Nice-to-have | 🔜 Not started |
 | [019](019-numbertile-format-robustness.md) | `NumberTile` formatting is fragile (unvalidated verb, naive grouping) | Nice-to-have | 🔜 Not started |
