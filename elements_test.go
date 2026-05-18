@@ -122,3 +122,59 @@ func TestNewTableFromColumnsPanicsOnMismatch(t *testing.T) {
 		"y": {1},
 	})
 }
+
+func TestNewTableFromColumnsRowValues(t *testing.T) {
+	data := map[string][]any{
+		"name":  {"Alice", "Bob"},
+		"score": {95, 87},
+	}
+	tbl := NewTableFromColumns("T", data)
+
+	// columns sorted alphabetically: name, score
+	if len(tbl.Columns) != 2 || tbl.Columns[0] != "name" || tbl.Columns[1] != "score" {
+		t.Fatalf("Columns: got %v, want [name score]", tbl.Columns)
+	}
+	if len(tbl.Rows) != 2 {
+		t.Fatalf("Rows: got %d, want 2", len(tbl.Rows))
+	}
+	if tbl.Rows[0]["name"] != "Alice" {
+		t.Errorf("row[0][name]: got %v, want Alice", tbl.Rows[0]["name"])
+	}
+	if tbl.Rows[0]["score"] != 95 {
+		t.Errorf("row[0][score]: got %v, want 95", tbl.Rows[0]["score"])
+	}
+	if tbl.Rows[1]["name"] != "Bob" {
+		t.Errorf("row[1][name]: got %v, want Bob", tbl.Rows[1]["name"])
+	}
+	if tbl.Rows[1]["score"] != 87 {
+		t.Errorf("row[1][score]: got %v, want 87", tbl.Rows[1]["score"])
+	}
+}
+
+func TestNewTableFromColumnsEmpty(t *testing.T) {
+	tbl := NewTableFromColumns("T", map[string][]any{})
+	if len(tbl.Rows) != 0 {
+		t.Errorf("Rows: got %d, want 0", len(tbl.Rows))
+	}
+	if len(tbl.Columns) != 0 {
+		t.Errorf("Columns: got %d, want 0", len(tbl.Columns))
+	}
+}
+
+func TestNewTableFromColumnsNonStringAny(t *testing.T) {
+	data := map[string][]any{
+		"int_val":   {42, 100},
+		"float_val": {3.14, 2.71},
+	}
+	tbl := NewTableFromColumns("T", data)
+
+	if len(tbl.Rows) != 2 {
+		t.Fatalf("Rows: got %d, want 2", len(tbl.Rows))
+	}
+	if tbl.Rows[0]["int_val"] != 42 {
+		t.Errorf("row[0][int_val]: got %v (%T), want 42", tbl.Rows[0]["int_val"], tbl.Rows[0]["int_val"])
+	}
+	if tbl.Rows[0]["float_val"] != 3.14 {
+		t.Errorf("row[0][float_val]: got %v (%T), want 3.14", tbl.Rows[0]["float_val"], tbl.Rows[0]["float_val"])
+	}
+}
