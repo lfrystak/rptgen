@@ -69,16 +69,16 @@ func EqualColumns(n int) []int {
 // Theme controls the visual appearance of a rendered report.
 // Empty string fields mean "use default"; HtmlRenderer applies defaults at render time.
 type Theme struct {
-	PrimaryColor    string
-	SecondaryColor  string
-	BackgroundColor string // page/body background
-	CardColor       string // element card/tile background
-	TextColor       string
-	AccentColor     string
-	FontFamily      string
-	BorderRadius    string
-	ChartColors     []string
-	ShadowIntensity string // "none"|"subtle"|"medium"|"strong"
+	PrimaryColor     string
+	SecondaryColor   string
+	BackgroundColor  string // page/body background
+	CardColor        string // element card/tile background
+	TextColor        string
+	AccentColor      string
+	FontFamily       string
+	BorderRadius     string
+	ChartColors      []string
+	ShadowIntensity  string // "none"|"subtle"|"medium"|"strong"
 	EnableAnimations bool
 	EnableGradients  bool
 }
