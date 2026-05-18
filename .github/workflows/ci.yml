@@ -70,6 +70,7 @@ jobs:
           -Dsonar.go.coverage.reportPaths=coverage.out
           -Dsonar.verbose=${{ inputs.sonar_verbose || false }}
           -Dsonar.sarifReportPaths=golangci-lint-sarif.json
+          -Dsonar.coverage.exclusions=example/**/*.go
 
   release:
     runs-on: ubuntu-latest

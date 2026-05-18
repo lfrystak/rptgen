@@ -32,3 +32,13 @@ go.work.sum
 # .vscode/
 # Added by goreleaser init:
 dist/
+
+# Claude
+.claude/*
+
+# SQ IDE
+.vscode/settings.json
+
+# Generated reports
+report-custom.html
+report.html
