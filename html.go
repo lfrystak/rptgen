@@ -312,8 +312,8 @@ func chartInitScript(id string, config any) string {
 // --- Chart config structs ---
 
 type chartConfig struct {
-	Type    string      `json:"type"`
-	Data    chartData   `json:"data"`
+	Type    string       `json:"type"`
+	Data    chartData    `json:"data"`
 	Options chartOptions `json:"options"`
 }
 

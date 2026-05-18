@@ -17,7 +17,7 @@ column as work progresses: `Not started` · `In progress` · `Done` · `Won't do
 | [009](009-ci-workflow-defects.md) | CI: placeholder step, non-enforcing lint, missing quality gates | Important | Not started |
 | [010](010-goreleaser-library-misconfig.md) | GoReleaser builds binaries for a library | Important | Not started |
 | [011](011-gomod-pins-patch-version.md) | `go.mod` pins a patch toolchain version (`go 1.26.3`) | Important | Not started |
-| [012](012-gofmt-not-clean.md) | Source is not `gofmt`-clean | Important | Not started |
+| [012](012-gofmt-not-clean.md) | Source is not `gofmt`-clean | Important | Done |
 | [013](013-documentation-drift.md) | README documents behaviour the code does not implement | Important | Not started |
 | [014](014-dead-theme-fields.md) | Dead/misleading `Theme` fields: `AccentColor`, `EnableGradients` | Important | Not started |
 | [015](015-html-monolith-refactor.md) | `html.go` is a 765-line monolith mixing five concerns | Important | Not started |
