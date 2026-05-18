@@ -8,6 +8,10 @@ import (
 	"github.com/lfrystak/rptgen"
 )
 
+const (
+	dateFormat = "January 02, 2006"
+)
+
 func main() {
 	// Sample data — simulating data extracted from an API
 	salesByRegion := map[string]float64{
@@ -85,12 +89,12 @@ func main() {
 	timeline.AddElement(&rptgen.DateTile{
 		Title:  "Quarter Start",
 		Value:  time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC),
-		Format: "January 02, 2006",
+		Format: dateFormat,
 	})
 	timeline.AddElement(&rptgen.DateTile{
 		Title:  "Quarter End",
 		Value:  time.Date(2024, 6, 30, 0, 0, 0, 0, time.UTC),
-		Format: "January 02, 2006",
+		Format: dateFormat,
 	})
 	timeline.AddElement(&rptgen.DateTile{
 		Title:    "Report Generated",
@@ -152,7 +156,7 @@ func main() {
 	canvas.AddElement(&rptgen.DateTile{
 		Title:  "Today",
 		Value:  time.Now(),
-		Format: "January 02, 2006",
+		Format: "dateFormat",
 	})
 	canvasSection.AddElement(canvas)
 	canvasSection.AddElement(func() rptgen.Element {

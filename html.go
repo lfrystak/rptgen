@@ -23,6 +23,7 @@ func (h HtmlRenderer) Render(report *Report, theme *Theme) (string, error) {
 		theme = DefaultTheme()
 	}
 
+	gen := newIDGen()
 	var chartScripts []string
 	var b strings.Builder
 
@@ -59,7 +60,7 @@ func (h HtmlRenderer) Render(report *Report, theme *Theme) (string, error) {
 		fmt.Fprintf(&b, "      <div class=\"section-grid\" style=\"--col-template: %s\">\n", colTemplate)
 		for _, elem := range section.Elements {
 			b.WriteString("        <div class=\"element-wrapper\">\n")
-			rendered, scripts := renderElement(elem, theme)
+			rendered, scripts := renderElement(elem, theme, gen, section.Title)
 			b.WriteString(rendered)
 			chartScripts = append(chartScripts, scripts...)
 			b.WriteString("        </div>\n")
@@ -103,8 +104,51 @@ func columnWidthsToCSS(widths []int) string {
 	return strings.Join(parts, " ")
 }
 
+// slugify converts a string to a lowercase hyphen-separated identifier.
+// Runs of non-alphanumeric characters collapse to a single hyphen; leading/trailing hyphens are trimmed.
+func slugify(s string) string {
+	s = strings.ToLower(s)
+	var b strings.Builder
+	prevDash := true
+	for _, r := range s {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			prevDash = false
+		} else if !prevDash {
+			b.WriteByte('-')
+			prevDash = true
+		}
+	}
+	return strings.TrimRight(b.String(), "-")
+}
+
+// idGen produces unique, deterministic IDs for chart canvas elements within a single render.
+type idGen struct{ seen map[string]int }
+
+func newIDGen() *idGen { return &idGen{seen: make(map[string]int)} }
+
+func (g *idGen) next(sectionTitle, chartTitle string) string {
+	s, t := slugify(sectionTitle), slugify(chartTitle)
+	var base string
+	switch {
+	case s != "" && t != "":
+		base = s + "-" + t
+	case t != "":
+		base = t
+	case s != "":
+		base = s
+	default:
+		base = "chart"
+	}
+	g.seen[base]++
+	if g.seen[base] == 1 {
+		return base
+	}
+	return fmt.Sprintf("%s-%d", base, g.seen[base])
+}
+
 // renderElement dispatches to the correct element renderer and returns HTML + any chart init scripts.
-func renderElement(elem Element, theme *Theme) (string, []string) {
+func renderElement(elem Element, theme *Theme, gen *idGen, sectionTitle string) (string, []string) {
 	switch e := elem.(type) {
 	case *NumberTile:
 		return renderNumberTile(e), nil
@@ -115,19 +159,23 @@ func renderElement(elem Element, theme *Theme) (string, []string) {
 	case *Table:
 		return renderTable(e), nil
 	case *Canvas:
-		return renderCanvas(e, theme)
+		return renderCanvas(e, theme, gen, sectionTitle)
 	case *BarChart:
-		script := renderBarChartScript(e, theme)
-		return renderChartContainer(e.elementID(), e.Title, e.Tooltip), []string{script}
+		id := gen.next(sectionTitle, e.Title)
+		script := renderBarChartScript(id, e, theme)
+		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}
 	case *LineChart:
-		script := renderLineChartScript(e, theme)
-		return renderChartContainer(e.elementID(), e.Title, e.Tooltip), []string{script}
+		id := gen.next(sectionTitle, e.Title)
+		script := renderLineChartScript(id, e, theme)
+		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}
 	case *PieChart:
-		script := renderPieChartScript(e, theme)
-		return renderChartContainer(e.elementID(), e.Title, e.Tooltip), []string{script}
+		id := gen.next(sectionTitle, e.Title)
+		script := renderPieChartScript(id, e, theme)
+		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}
 	case *StackedBarChart:
-		script := renderStackedBarChartScript(e, theme)
-		return renderChartContainer(e.elementID(), e.Title, e.Tooltip), []string{script}
+		id := gen.next(sectionTitle, e.Title)
+		script := renderStackedBarChartScript(id, e, theme)
+		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}
 	default:
 		return fmt.Sprintf("<div><!-- unknown element: %s --></div>\n", html.EscapeString(elem.ElementType())), nil
 	}
@@ -199,14 +247,14 @@ func renderTable(e *Table) string {
 	return b.String()
 }
 
-func renderCanvas(e *Canvas, theme *Theme) (string, []string) {
+func renderCanvas(e *Canvas, theme *Theme, gen *idGen, sectionTitle string) (string, []string) {
 	colTemplate := columnWidthsToCSS(e.ColumnWidths)
 	var b strings.Builder
 	var allScripts []string
 	fmt.Fprintf(&b, "          <div class=\"element canvas-grid\" style=\"--col-template: %s\">\n", colTemplate)
 	for _, child := range e.Elements {
 		b.WriteString("            <div class=\"element-wrapper\">\n")
-		rendered, scripts := renderElement(child, theme)
+		rendered, scripts := renderElement(child, theme, gen, sectionTitle)
 		b.WriteString(rendered)
 		allScripts = append(allScripts, scripts...)
 		b.WriteString("            </div>\n")
@@ -309,7 +357,7 @@ type chartAxis struct {
 	Stacked bool `json:"stacked,omitempty"`
 }
 
-func renderBarChartScript(e *BarChart, theme *Theme) string {
+func renderBarChartScript(id string, e *BarChart, theme *Theme) string {
 	colors := chartColors(theme)
 	labels := sortedKeys(e.Data)
 	data := make([]float64, len(labels))
@@ -339,10 +387,10 @@ func renderBarChartScript(e *BarChart, theme *Theme) string {
 			Plugins:     &chartPlugins{Legend: &chartLegend{Display: false}},
 		},
 	}
-	return chartInitScript(e.elementID(), cfg)
+	return chartInitScript(id, cfg)
 }
 
-func renderLineChartScript(e *LineChart, theme *Theme) string {
+func renderLineChartScript(id string, e *LineChart, theme *Theme) string {
 	colors := chartColors(theme)
 
 	// Collect all unique labels in order of first appearance across all series.
@@ -391,10 +439,10 @@ func renderLineChartScript(e *LineChart, theme *Theme) string {
 			Plugins:     &chartPlugins{Legend: &chartLegend{Display: len(e.Series) > 1}},
 		},
 	}
-	return chartInitScript(e.elementID(), cfg)
+	return chartInitScript(id, cfg)
 }
 
-func renderPieChartScript(e *PieChart, theme *Theme) string {
+func renderPieChartScript(id string, e *PieChart, theme *Theme) string {
 	colors := chartColors(theme)
 	labels := sortedKeys(e.Data)
 	data := make([]float64, len(labels))
@@ -418,10 +466,10 @@ func renderPieChartScript(e *PieChart, theme *Theme) string {
 		},
 		Options: chartOptions{Responsive: true, AspectRatio: &ratio},
 	}
-	return chartInitScript(e.elementID(), cfg)
+	return chartInitScript(id, cfg)
 }
 
-func renderStackedBarChartScript(e *StackedBarChart, theme *Theme) string {
+func renderStackedBarChartScript(id string, e *StackedBarChart, theme *Theme) string {
 	colors := chartColors(theme)
 
 	// Collect all series names in order of first appearance.
@@ -472,7 +520,7 @@ func renderStackedBarChartScript(e *StackedBarChart, theme *Theme) string {
 			Scales:      &chartScales{X: stacked, Y: stacked},
 		},
 	}
-	return chartInitScript(e.elementID(), cfg)
+	return chartInitScript(id, cfg)
 }
 
 // generateCSS produces the full CSS for the report, parameterized by Theme.

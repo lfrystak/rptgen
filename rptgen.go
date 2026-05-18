@@ -1,32 +1,18 @@
 package rptgen
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"time"
 )
 
 // Element is the interface all report elements implement.
-// elementID is unexported so only renderers within the package can call it.
 type Element interface {
-	elementID() string
 	ElementType() string
 }
 
-// BaseElement holds the random ID shared by all concrete element types.
-type BaseElement struct {
-	id string
-}
+// BaseElement is embedded by all concrete element types.
+type BaseElement struct{}
 
-func newBaseElement() BaseElement {
-	b := make([]byte, 8)
-	if _, err := rand.Read(b); err != nil {
-		panic("rptgen: crypto/rand unavailable: " + err.Error())
-	}
-	return BaseElement{id: hex.EncodeToString(b)}
-}
-
-func (b BaseElement) elementID() string { return b.id }
+func newBaseElement() BaseElement { return BaseElement{} }
 
 // Report is the top-level document container.
 type Report struct {
