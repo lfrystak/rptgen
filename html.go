@@ -135,8 +135,8 @@ func renderElement(elem Element, report *Report, theme *Theme) (string, []string
 
 func renderNumberTile(e *NumberTile, report *Report) string {
 	var b strings.Builder
-	tooltipAttr := tooltipAttr(e.Tooltip)
-	fmt.Fprintf(&b, "          <div class=\"element tile number-tile\"%s>\n", tooltipAttr)
+	b.WriteString("          <div class=\"element tile number-tile\">\n")
+	b.WriteString(tooltipIcon(e.Tooltip))
 	fmt.Fprintf(&b, "            <div class=\"tile-title\">%s</div>\n", html.EscapeString(e.Title))
 	fmt.Fprintf(&b, "            <div class=\"tile-value\">%s</div>\n", html.EscapeString(e.FormatValue(report.Locale)))
 	if e.Subtitle != "" {
@@ -148,8 +148,8 @@ func renderNumberTile(e *NumberTile, report *Report) string {
 
 func renderDateTile(e *DateTile) string {
 	var b strings.Builder
-	tooltipAttr := tooltipAttr(e.Tooltip)
-	fmt.Fprintf(&b, "          <div class=\"element tile date-tile\"%s>\n", tooltipAttr)
+	b.WriteString("          <div class=\"element tile date-tile\">\n")
+	b.WriteString(tooltipIcon(e.Tooltip))
 	fmt.Fprintf(&b, "            <div class=\"tile-title\">%s</div>\n", html.EscapeString(e.Title))
 	fmt.Fprintf(&b, "            <div class=\"tile-value\">%s</div>\n", html.EscapeString(e.FormatValue()))
 	if e.Subtitle != "" {
@@ -217,8 +217,8 @@ func renderCanvas(e *Canvas, report *Report, theme *Theme) (string, []string) {
 
 func renderChartContainer(id, title, tooltip string) string {
 	var b strings.Builder
-	tooltipAttr := tooltipAttr(tooltip)
-	fmt.Fprintf(&b, "          <div class=\"element chart-container\"%s>\n", tooltipAttr)
+	b.WriteString("          <div class=\"element chart-container\">\n")
+	b.WriteString(tooltipIcon(tooltip))
 	if title != "" {
 		fmt.Fprintf(&b, "            <h3 class=\"element-title\">%s</h3>\n", html.EscapeString(title))
 	}
@@ -227,11 +227,11 @@ func renderChartContainer(id, title, tooltip string) string {
 	return b.String()
 }
 
-func tooltipAttr(tooltip string) string {
+func tooltipIcon(tooltip string) string {
 	if tooltip == "" {
 		return ""
 	}
-	return fmt.Sprintf(" data-tooltip=\"%s\"", html.EscapeString(tooltip))
+	return fmt.Sprintf("            <span class=\"tooltip-icon\" data-tooltip=\"%s\">&#9432;</span>\n", html.EscapeString(tooltip))
 }
 
 func chartColors(theme *Theme) []string {
@@ -551,14 +551,16 @@ body {
   background: %s;
   border-radius: %s;
   box-shadow: %s;
-  overflow: hidden;
+  position: relative;
 }
-`, t.BackgroundColor, t.BorderRadius, shadow)
+`, t.CardColor, t.BorderRadius, shadow)
 
 	// Tiles
 	fmt.Fprintf(&b, `.tile {
   padding: 1.5rem;
+  padding-top: 2rem;
   text-align: center;
+  position: relative;
 }
 .tile-title {
   font-size: 0.85rem;
@@ -629,23 +631,40 @@ tbody tr:hover td {
 .free-text p { margin: 0; }
 `)
 
-	// Tooltip
-	b.WriteString(`[data-tooltip] { position: relative; cursor: help; }
-[data-tooltip]:hover::after {
+	// Tooltip icon
+	b.WriteString(`.tooltip-icon {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: #9ca3af;
+  cursor: help;
+  z-index: 10;
+}
+.tooltip-icon:hover { color: #6b7280; }
+.tooltip-icon::after {
   content: attr(data-tooltip);
+  display: none;
   position: absolute;
   bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,0.8);
+  right: 0;
+  min-width: 180px;
+  max-width: 280px;
+  background: rgba(0,0,0,0.85);
   color: #fff;
   padding: 0.4rem 0.6rem;
   border-radius: 4px;
-  font-size: 0.8rem;
-  white-space: nowrap;
-  z-index: 100;
+  font-size: 0.78rem;
+  white-space: normal;
+  line-height: 1.4;
+  z-index: 200;
   pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
+.tooltip-icon:hover::after { display: block; }
 `)
 
 	// Animations

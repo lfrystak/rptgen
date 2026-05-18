@@ -73,7 +73,8 @@ func (s *Section) AddElement(e Element) *Section {
 type Theme struct {
 	PrimaryColor    string
 	SecondaryColor  string
-	BackgroundColor string
+	BackgroundColor string // page/body background
+	CardColor       string // element card/tile background
 	TextColor       string
 	AccentColor     string
 	FontFamily      string
@@ -89,7 +90,8 @@ func DefaultTheme() *Theme {
 	return &Theme{
 		PrimaryColor:     "#2563eb",
 		SecondaryColor:   "#64748b",
-		BackgroundColor:  "#ffffff",
+		BackgroundColor:  "#f1f5f9",
+		CardColor:        "#ffffff",
 		TextColor:        "#1e293b",
 		AccentColor:      "#10b981",
 		FontFamily:       `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`,
