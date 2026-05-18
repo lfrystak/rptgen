@@ -16,7 +16,7 @@ column as work progresses: `Not started` · `In progress` · `Done` · `Won't do
 | [008](008-api-consistency.md) | Inconsistent public API: constructors vs raw struct literals | Important | Not started |
 | [009](009-ci-workflow-defects.md) | CI: placeholder step, non-enforcing lint, missing quality gates | Important | Done |
 | [010](010-goreleaser-library-misconfig.md) | GoReleaser builds binaries for a library | Important | Not started |
-| [011](011-gomod-pins-patch-version.md) | `go.mod` pins a patch toolchain version (`go 1.26.3`) | Important | Not started |
+| [011](011-gomod-pins-patch-version.md) | `go.mod` pins a patch toolchain version (`go 1.26.3`) | Important | Done |
 | [012](012-gofmt-not-clean.md) | Source is not `gofmt`-clean | Important | Done |
 | [013](013-documentation-drift.md) | README documents behaviour the code does not implement | Important | Not started |
 | [014](014-dead-theme-fields.md) | Dead/misleading `Theme` fields: `AccentColor`, `EnableGradients` | Important | Not started |
