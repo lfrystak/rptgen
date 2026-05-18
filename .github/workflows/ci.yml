@@ -74,6 +74,22 @@ jobs:
           -Dsonar.sarifReportPaths=golangci-lint-sarif.json
           -Dsonar.coverage.exclusions=example/**/*.go
 
+  compat:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - uses: ./.github/actions/setup-go
+      with:
+        go-version: "1.21"
+
+    - name: Build (min Go)
+      run: go build ./...
+
+    - name: Test (min Go)
+      run: go test -race ./...
+
   release:
     runs-on: ubuntu-latest
     needs: build-test-analyze
