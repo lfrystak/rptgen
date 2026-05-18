@@ -174,7 +174,6 @@ func TestNoExternalReferences(t *testing.T) {
 	}
 }
 
-
 func TestHtmlThemeApplication(t *testing.T) {
 	r := NewReport("Theme Test")
 	r.AddSection(&Section{})
