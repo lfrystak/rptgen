@@ -37,22 +37,24 @@ jobs:
       with:
         go-version: ${{ env.GO_VERSION }}
 
+    - name: gofmt
+      run: test -z "$(gofmt -l .)"
+
+    - name: go vet
+      run: go vet ./...
+
     - name: golangci-lint
       uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20
-      continue-on-error: true
       with:
         version: v2.12
         args: >
           --output.sarif.path golangci-lint-sarif.json
 
-    - name: Test
-      run: ls -al
-
     - name: Build
       run: go build -v ./...
 
     - name: Test
-      run: go test -v ./... -coverprofile=coverage.out
+      run: go test -race -v ./... -coverprofile=coverage.out
 
     - name: SQ Analysis
       uses: SonarSource/sonarqube-scan-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432
