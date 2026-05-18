@@ -32,6 +32,14 @@ func sortedKeys(m map[string]float64) []string {
 // config may be any marshallable value. New chart types (scatter, radar, bubble, etc.)
 // should define their own config structs and pass them here rather than modifying the
 // shared chartConfig/chartDataset/chartOptions structs below.
+//
+// SECURITY: json.Marshal HTML-escapes <, >, and & to <, >, & by default,
+// making the JSON safe to embed inside a <script> element. Do NOT use json.Encoder with
+// SetEscapeHTML(false) here — it would reintroduce XSS via user-controlled label strings.
+//
+// id MUST be produced by slugify (output charset [a-z0-9-]), which ensures it is safe
+// inside the single-quoted JS string getElementById('...'). Passing an arbitrary string
+// directly as id would allow JS injection.
 func chartInitScript(id string, config any) string {
 	configJSON, err := json.Marshal(config)
 	if err != nil {

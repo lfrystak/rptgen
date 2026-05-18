@@ -91,7 +91,10 @@ func (d *DateTile) FormatValue() string {
 type FreeText struct {
 	BaseElement
 	Content string
-	IsHTML  bool // if true, Content is rendered as raw HTML (not escaped)
+	// SECURITY: when IsHTML is true, Content is injected verbatim into the document without
+	// any escaping. The caller is responsible for ensuring the value is safe HTML — i.e. it
+	// must be sanitized before being passed here if it originates from untrusted input.
+	IsHTML bool
 }
 
 func (f *FreeText) ElementType() string { return "FreeText" }
