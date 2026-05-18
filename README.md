@@ -141,6 +141,11 @@ Displays a block of plain text or raw HTML.
 | `Content` | `string` | The text (or HTML) to render.                                       |
 | `IsHTML`  | `bool`   | If `true`, `Content` is injected as-is. If `false`, it is escaped. |
 
+> **Security note:** When `IsHTML` is `true`, `Content` is written into the document verbatim
+> with **no escaping**. If the value originates from user input or any untrusted source you
+> must sanitize it (e.g. with [bluemonday](https://github.com/microcosm-cc/bluemonday)) before
+> passing it to `FreeText`. Failing to do so allows stored XSS.
+
 ```go
 &rptgen.FreeText{Content: "Plain paragraph text."}
 &rptgen.FreeText{Content: "<p>Rich <strong>HTML</strong> content.</p>", IsHTML: true}
