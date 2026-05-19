@@ -72,10 +72,22 @@ func parseChartScript(t *testing.T, script string) chartConfig {
 	return cfg
 }
 
-// customTestElement is a dummy Element used to exercise the unknown-type branch in renderElement.
+// customTestElement is a dummy Element that does NOT implement HTMLRenderable, used to
+// exercise the unknown-type error branch in renderElement.
 type customTestElement struct{ BaseElement }
 
 func (c *customTestElement) ElementType() string { return "CustomTestElement" }
+
+// greenBoxElement is a custom Element that implements HTMLRenderable directly.
+// It is used to verify that external element types can participate in HtmlRenderer
+// without modifying renderElement.
+type greenBoxElement struct{ BaseElement }
+
+func (g *greenBoxElement) ElementType() string { return "GreenBox" }
+
+func (g *greenBoxElement) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
+	return "          <div class=\"element\" style=\"background:green\">custom</div>\n", nil, nil
+}
 
 func buildFullReport() *Report {
 	r := NewReport("Smoke Test Report")
@@ -805,11 +817,11 @@ func TestRenderElementUnknownType(t *testing.T) {
 	}
 }
 
-// --- chartInitScript error path ---
+// --- ChartInitScript error path ---
 
 func TestChartInitScriptMarshalError(t *testing.T) {
 	// channels are not JSON-marshalable; this exercises the propagated error path.
-	_, err := chartInitScript("id", make(chan int))
+	_, err := ChartInitScript("id", make(chan int))
 	if err == nil {
 		t.Fatal("expected error for unmarshalable config, got nil")
 	}
@@ -834,5 +846,119 @@ func TestTableNonStringAnyCell(t *testing.T) {
 	}
 	if !strings.Contains(out, ">3.14<") {
 		t.Error("output must contain float cell value 3.14")
+	}
+}
+
+// --- spec 005: open element interface / HTMLRenderable ---
+
+// TestCustomHTMLRenderableElement verifies that an element type defined outside the
+// package (simulated here in the test file) renders correctly via HtmlRenderer once
+// it implements HTMLRenderable — without any modification to renderElement.
+func TestCustomHTMLRenderableElement(t *testing.T) {
+	r := NewReport("Custom")
+	section := &Section{}
+	section.AddElement(&greenBoxElement{BaseElement: newBaseElement()})
+	r.AddSection(section)
+
+	out, err := HtmlRenderer{}.Render(r, nil)
+	if err != nil {
+		t.Fatalf("Render returned error for custom HTMLRenderable element: %v", err)
+	}
+	if !strings.Contains(out, "background:green") {
+		t.Error("output must contain the custom element's HTML (background:green)")
+	}
+	if !strings.Contains(out, "custom") {
+		t.Error("output must contain the custom element's text content")
+	}
+}
+
+// TestScatterChartRenders is the spec-005 acceptance test: ScatterChart is a new chart
+// type added without touching renderElement or any central dispatch.
+func TestScatterChartRenders(t *testing.T) {
+	r := NewReport("Scatter")
+	section := &Section{Title: "Metrics"}
+	section.AddElement(NewScatterChart("Points", []ScatterPoint{
+		{X: 1, Y: 2},
+		{X: 3, Y: 4},
+		{X: 5, Y: 6},
+	}))
+	r.AddSection(section)
+
+	out, err := HtmlRenderer{}.Render(r, nil)
+	if err != nil {
+		t.Fatalf("Render returned error for ScatterChart: %v", err)
+	}
+	if !strings.Contains(out, `"type":"scatter"`) {
+		t.Error("output must contain Chart.js scatter type")
+	}
+	if !strings.Contains(out, `"x":1`) {
+		t.Error("output must contain scatter point x:1")
+	}
+	if !strings.Contains(out, `"y":2`) {
+		t.Error("output must contain scatter point y:2")
+	}
+	if !strings.Contains(out, "new Chart(") {
+		t.Error("output must contain Chart.js initialisation call")
+	}
+}
+
+// TestScatterChartScript validates the Chart.js JSON shape produced by ScatterChart.RenderHTML.
+func TestScatterChartScript(t *testing.T) {
+	gen := newIDGen()
+	ctx := &HTMLRenderContext{
+		Theme:        DefaultTheme(),
+		SectionTitle: "sec",
+		idGen:        gen,
+	}
+	chart := NewScatterChart("XY", []ScatterPoint{{X: 10, Y: 20}, {X: 30, Y: 40}})
+	_, scripts, err := chart.RenderHTML(ctx)
+	if err != nil {
+		t.Fatalf("RenderHTML: %v", err)
+	}
+	if len(scripts) != 1 {
+		t.Fatalf("expected 1 script, got %d", len(scripts))
+	}
+
+	// Extract the JSON manually: the script has a different type name (scatterConfig),
+	// so we parse just the type field to confirm it is "scatter".
+	script := scripts[0]
+	if !strings.Contains(script, `"type":"scatter"`) {
+		t.Errorf("script must contain type:scatter; got: %s", script)
+	}
+	if !strings.Contains(script, `"x":10`) {
+		t.Errorf("script must contain x:10; got: %s", script)
+	}
+	if !strings.Contains(script, `"y":20`) {
+		t.Errorf("script must contain y:20; got: %s", script)
+	}
+}
+
+// TestHTMLRenderContextNextID verifies the exported NextID helper used by custom elements.
+func TestHTMLRenderContextNextID(t *testing.T) {
+	gen := newIDGen()
+	ctx := &HTMLRenderContext{
+		Theme:        DefaultTheme(),
+		SectionTitle: "My Section",
+		idGen:        gen,
+	}
+	id1 := ctx.NextID("Sales Chart")
+	id2 := ctx.NextID("Sales Chart") // collision → suffix
+	if id1 != "my-section-sales-chart" {
+		t.Errorf("first ID: got %q, want my-section-sales-chart", id1)
+	}
+	if id2 != "my-section-sales-chart-2" {
+		t.Errorf("collision ID: got %q, want my-section-sales-chart-2", id2)
+	}
+}
+
+// TestHTMLRenderContextChartColors verifies that ChartColors falls back to defaults.
+func TestHTMLRenderContextChartColors(t *testing.T) {
+	ctx := &HTMLRenderContext{Theme: &Theme{}}
+	colors := ctx.ChartColors()
+	if len(colors) == 0 {
+		t.Fatal("ChartColors must return at least one color")
+	}
+	if colors[0] != defaultChartColors[0] {
+		t.Errorf("default color[0]: got %q, want %q", colors[0], defaultChartColors[0])
 	}
 }

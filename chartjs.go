@@ -17,7 +17,7 @@ func chartColors(theme *Theme) []string {
 	return defaultChartColors
 }
 
-// chartInitScript wraps a Chart.js config JSON in an IIFE.
+// ChartInitScript wraps a Chart.js config JSON in an IIFE.
 // config may be any marshallable value. New chart types (scatter, radar, bubble, etc.)
 // should define their own config structs and pass them here rather than modifying the
 // shared chartConfig/chartDataset/chartOptions structs below.
@@ -26,13 +26,13 @@ func chartColors(theme *Theme) []string {
 // making the JSON safe to embed inside a <script> element. Do NOT use json.Encoder with
 // SetEscapeHTML(false) here — it would reintroduce XSS via user-controlled label strings.
 //
-// id MUST be produced by slugify (output charset [a-z0-9-]), which ensures it is safe
+// id MUST be produced by ctx.NextID (output charset [a-z0-9-]), which ensures it is safe
 // inside the single-quoted JS string getElementById('...'). Passing an arbitrary string
 // directly as id would allow JS injection.
-func chartInitScript(id string, config any) (string, error) {
+func ChartInitScript(id string, config any) (string, error) {
 	configJSON, err := json.Marshal(config)
 	if err != nil {
-		return "", fmt.Errorf("rptgen: chartInitScript: marshal failed: %w", err)
+		return "", fmt.Errorf("rptgen: ChartInitScript: marshal failed: %w", err)
 	}
 	return fmt.Sprintf("(function(){var ctx=document.getElementById('%s').getContext('2d');new Chart(ctx,%s);})();",
 		id, string(configJSON)), nil

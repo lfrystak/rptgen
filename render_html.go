@@ -115,6 +115,12 @@ func renderSectionHTML(section *Section, theme *Theme, gen *idGen) (string, []st
 	var b strings.Builder
 	var scripts []string
 
+	ctx := &HTMLRenderContext{
+		Theme:        theme,
+		SectionTitle: section.Title,
+		idGen:        gen,
+	}
+
 	colTemplate := columnWidthsToCSS(section.ColumnWidths)
 	b.WriteString("    <section class=\"report-section\">\n")
 	if section.Title != "" {
@@ -123,7 +129,7 @@ func renderSectionHTML(section *Section, theme *Theme, gen *idGen) (string, []st
 	fmt.Fprintf(&b, "      <div class=\"section-grid\" style=\"--col-template: %s\">\n", colTemplate)
 	for _, elem := range section.Elements {
 		b.WriteString("        <div class=\"element-wrapper\">\n")
-		rendered, elemScripts, err := renderElement(elem, theme, gen, section.Title)
+		rendered, elemScripts, err := renderElement(elem, ctx)
 		if err != nil {
 			return "", nil, err
 		}

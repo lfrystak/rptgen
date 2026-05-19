@@ -6,53 +6,18 @@ import (
 	"strings"
 )
 
-// renderElement dispatches to the correct element renderer and returns HTML + any chart init scripts.
-func renderElement(elem Element, theme *Theme, gen *idGen, sectionTitle string) (string, []string, error) {
-	switch e := elem.(type) {
-	case *NumberTile:
-		return renderNumberTile(e), nil, nil
-	case *DateTile:
-		return renderDateTile(e), nil, nil
-	case *FreeText:
-		return renderFreeText(e), nil, nil
-	case *Table:
-		return renderTable(e), nil, nil
-	case *Canvas:
-		return renderCanvas(e, theme, gen, sectionTitle)
-	case *BarChart:
-		id := gen.next(sectionTitle, e.Title)
-		script, err := renderBarChartScript(id, e, theme)
-		if err != nil {
-			return "", nil, err
-		}
-		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
-	case *LineChart:
-		id := gen.next(sectionTitle, e.Title)
-		script, err := renderLineChartScript(id, e, theme)
-		if err != nil {
-			return "", nil, err
-		}
-		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
-	case *PieChart:
-		id := gen.next(sectionTitle, e.Title)
-		script, err := renderPieChartScript(id, e, theme)
-		if err != nil {
-			return "", nil, err
-		}
-		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
-	case *StackedBarChart:
-		id := gen.next(sectionTitle, e.Title)
-		script, err := renderStackedBarChartScript(id, e, theme)
-		if err != nil {
-			return "", nil, err
-		}
-		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
-	default:
+// renderElement dispatches to the element's own RenderHTML implementation.
+// Any Element that does not implement HTMLRenderable returns an error.
+func renderElement(elem Element, ctx *HTMLRenderContext) (string, []string, error) {
+	hr, ok := elem.(HTMLRenderable)
+	if !ok {
 		return "", nil, fmt.Errorf("rptgen: unknown element type %q", elem.ElementType())
 	}
+	return hr.RenderHTML(ctx)
 }
 
-func renderNumberTile(e *NumberTile) string {
+// RenderHTML implements HTMLRenderable for NumberTile.
+func (e *NumberTile) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element tile number-tile\">\n")
 	b.WriteString(tooltipIcon(e.Tooltip))
@@ -62,10 +27,11 @@ func renderNumberTile(e *NumberTile) string {
 		fmt.Fprintf(&b, "            <div class=\"tile-subtitle\">%s</div>\n", html.EscapeString(e.Subtitle))
 	}
 	b.WriteString("          </div>\n")
-	return b.String()
+	return b.String(), nil, nil
 }
 
-func renderDateTile(e *DateTile) string {
+// RenderHTML implements HTMLRenderable for DateTile.
+func (e *DateTile) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element tile date-tile\">\n")
 	b.WriteString(tooltipIcon(e.Tooltip))
@@ -75,10 +41,11 @@ func renderDateTile(e *DateTile) string {
 		fmt.Fprintf(&b, "            <div class=\"tile-subtitle\">%s</div>\n", html.EscapeString(e.Subtitle))
 	}
 	b.WriteString("          </div>\n")
-	return b.String()
+	return b.String(), nil, nil
 }
 
-func renderFreeText(e *FreeText) string {
+// RenderHTML implements HTMLRenderable for FreeText.
+func (e *FreeText) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element free-text\">\n")
 	if e.IsHTML {
@@ -89,10 +56,11 @@ func renderFreeText(e *FreeText) string {
 		fmt.Fprintf(&b, "            <p>%s</p>\n", html.EscapeString(e.Content))
 	}
 	b.WriteString("          </div>\n")
-	return b.String()
+	return b.String(), nil, nil
 }
 
-func renderTable(e *Table) string {
+// RenderHTML implements HTMLRenderable for Table.
+func (e *Table) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element table-wrapper\">\n")
 	if e.Title != "" {
@@ -115,17 +83,18 @@ func renderTable(e *Table) string {
 		b.WriteString("</tr>\n")
 	}
 	b.WriteString("              </tbody>\n            </table>\n          </div>\n")
-	return b.String()
+	return b.String(), nil, nil
 }
 
-func renderCanvas(e *Canvas, theme *Theme, gen *idGen, sectionTitle string) (string, []string, error) {
+// RenderHTML implements HTMLRenderable for Canvas.
+func (e *Canvas) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
 	colTemplate := columnWidthsToCSS(e.ColumnWidths)
 	var b strings.Builder
 	var allScripts []string
 	fmt.Fprintf(&b, "          <div class=\"element canvas-grid\" style=\"--col-template: %s\">\n", colTemplate)
 	for _, child := range e.Elements {
 		b.WriteString("            <div class=\"element-wrapper\">\n")
-		rendered, scripts, err := renderElement(child, theme, gen, sectionTitle)
+		rendered, scripts, err := renderElement(child, ctx)
 		if err != nil {
 			return "", nil, err
 		}
@@ -137,7 +106,10 @@ func renderCanvas(e *Canvas, theme *Theme, gen *idGen, sectionTitle string) (str
 	return b.String(), allScripts, nil
 }
 
-func renderChartContainer(id, title, tooltip string) string {
+// RenderChartContainer returns the HTML card wrapper for a Chart.js canvas element.
+// Custom chart elements call this to produce the standard chart card HTML, then supply
+// the chart init script separately.
+func RenderChartContainer(id, title, tooltip string) string {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element chart-container\">\n")
 	b.WriteString(tooltipIcon(tooltip))

@@ -124,3 +124,29 @@ func NewStackedBarChart(title string, series []StackedBarSeries) *StackedBarChar
 		Series:    series,
 	}
 }
+
+// ScatterPoint is an X/Y coordinate for ScatterChart.
+type ScatterPoint struct {
+	X float64
+	Y float64
+}
+
+// ScatterChart displays a scatter plot. Each point is an independent {x, y} coordinate;
+// unlike bar/line charts there are no shared axis labels.
+//
+// ScatterChart is also the spec-005 acceptance-test element: it adds a new chart type
+// by implementing HTMLRenderable on its own struct without touching renderElement.
+type ScatterChart struct {
+	ChartBase
+	Points []ScatterPoint
+}
+
+func (s *ScatterChart) ElementType() string { return "ScatterChart" }
+
+// NewScatterChart creates a scatter chart with the given X/Y data points.
+func NewScatterChart(title string, points []ScatterPoint) *ScatterChart {
+	return &ScatterChart{
+		ChartBase: ChartBase{BaseElement: newBaseElement(), Title: title},
+		Points:    points,
+	}
+}

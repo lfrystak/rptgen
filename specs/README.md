@@ -10,7 +10,7 @@ column as work progresses: `🔜 Not started` · `🔄 In progress` · `✅ Done
 | [002](002-script-context-injection.md) | User data can break out of the `<script>` block (XSS / corruption) | Critical | ✅ Done |
 | [003](003-chart-data-ordering.md) | Chart category ordering destroyed by `map` + alphabetical sort | Critical | ✅ Done |
 | [004](004-error-handling.md) | Library panics on bad input, swallows errors, returns always-nil error | Important | ✅ Done |
-| [005](005-extensibility-element-interface.md) | `Element` interface is illusory: rendering is a hardcoded type switch | Important | 🔜 Not started |
+| [005](005-extensibility-element-interface.md) | `Element` interface is illusory: rendering is a hardcoded type switch | Important | ✅ Done |
 | [006](006-render-to-io-writer.md) | `Render` returns buffered `string` instead of writing to `io.Writer` | Important | 🔜 Not started |
 | [007](007-baseelement-dead-boilerplate.md) | `BaseElement` / `newBaseElement()` is dead boilerplate | Important | 🔜 Not started |
 | [008](008-api-consistency.md) | Inconsistent public API: constructors vs raw struct literals | Important | 🔜 Not started |
