@@ -1,6 +1,7 @@
 package rptgen
 
 import (
+	"io"
 	"time"
 )
 
@@ -134,5 +135,5 @@ type HTMLRenderer interface {
 // Renderer generates a report document from a Report and an optional Theme.
 // Implementations must call DefaultTheme() when theme is nil.
 type Renderer interface {
-	Render(report *Report, theme *Theme) (string, error)
+	Render(w io.Writer, report *Report, theme *Theme) error
 }

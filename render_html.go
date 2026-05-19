@@ -1,10 +1,11 @@
 package rptgen
 
 import (
-	"bytes"
+	"bufio"
 	"fmt"
 	"html"
 	"html/template"
+	"io"
 	"strings"
 )
 
@@ -65,9 +66,9 @@ var docTemplate = template.Must(template.New("doc").Parse(`<!DOCTYPE html>
 </body>
 </html>`))
 
-// Render converts report to a complete HTML document using the provided theme.
+// Render converts report to a complete HTML document and writes it to w.
 // If theme is nil, DefaultTheme() is used.
-func (h HtmlRenderer) Render(report *Report, theme *Theme) (string, error) {
+func (h HtmlRenderer) Render(w io.Writer, report *Report, theme *Theme) error {
 	if theme == nil {
 		theme = DefaultTheme()
 	}
@@ -79,7 +80,7 @@ func (h HtmlRenderer) Render(report *Report, theme *Theme) (string, error) {
 	for _, section := range report.Sections {
 		sectionHTML, scripts, err := renderSectionHTML(section, theme, gen)
 		if err != nil {
-			return "", err
+			return err
 		}
 		sections = append(sections, template.HTML(sectionHTML))
 		for _, s := range scripts {
@@ -103,8 +104,18 @@ func (h HtmlRenderer) Render(report *Report, theme *Theme) (string, error) {
 		ChartScripts: chartScripts,
 	}
 
-	var buf bytes.Buffer
-	if err := docTemplate.Execute(&buf, data); err != nil {
+	bw := bufio.NewWriter(w)
+	if err := docTemplate.Execute(bw, data); err != nil {
+		return err
+	}
+	return bw.Flush()
+}
+
+// RenderString renders report to a string. It is a convenience wrapper around Render
+// for callers that need the HTML as a string rather than streaming to a writer.
+func (h HtmlRenderer) RenderString(report *Report, theme *Theme) (string, error) {
+	var buf strings.Builder
+	if err := h.Render(&buf, report, theme); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
