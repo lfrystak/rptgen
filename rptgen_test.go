@@ -99,24 +99,45 @@ func TestSectionAddElement(t *testing.T) {
 	}
 }
 
+// TestDefaultTheme guards against drift between DefaultTheme() and the values
+// documented in README.md. Update this test whenever you change DefaultTheme().
 func TestDefaultTheme(t *testing.T) {
 	th := DefaultTheme()
 
-	if th.PrimaryColor != "#2563eb" {
-		t.Errorf("PrimaryColor: got %q", th.PrimaryColor)
+	want := map[string]string{
+		"PrimaryColor":    "#2563eb",
+		"SecondaryColor":  "#64748b",
+		"BackgroundColor": "#f1f5f9",
+		"CardColor":       "#ffffff",
+		"TextColor":       "#1e293b",
+		"AccentColor":     "#10b981",
+		"BorderRadius":    "0.5rem",
+		"ShadowIntensity": "medium",
 	}
-	if th.ShadowIntensity != "medium" {
-		t.Errorf("ShadowIntensity: got %q", th.ShadowIntensity)
+	got := map[string]string{
+		"PrimaryColor":    th.PrimaryColor,
+		"SecondaryColor":  th.SecondaryColor,
+		"BackgroundColor": th.BackgroundColor,
+		"CardColor":       th.CardColor,
+		"TextColor":       th.TextColor,
+		"AccentColor":     th.AccentColor,
+		"BorderRadius":    th.BorderRadius,
+		"ShadowIntensity": th.ShadowIntensity,
 	}
+	for field, wantVal := range want {
+		if got[field] != wantVal {
+			t.Errorf("DefaultTheme().%s: got %q, want %q (update README if intentional)", field, got[field], wantVal)
+		}
+	}
+
 	if !th.EnableAnimations {
-		t.Error("EnableAnimations must be true")
+		t.Error("DefaultTheme().EnableAnimations: got false, want true")
 	}
-	if th.BackgroundColor == "" {
-		t.Error("BackgroundColor must not be empty")
+	if th.EnableGradients {
+		t.Error("DefaultTheme().EnableGradients: got true, want false")
 	}
-	if th.TextColor == "" {
-		t.Error("TextColor must not be empty")
-	}
+	// ChartColors is intentionally nil in DefaultTheme; the built-in palette is
+	// applied at render time via chartColors(). README documents this as "Eight-color palette".
 }
 
 func TestEqualColumns(t *testing.T) {

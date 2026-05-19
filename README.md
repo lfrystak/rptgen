@@ -344,19 +344,20 @@ err = rptgen.HtmlRenderer{}.Render(f, report, theme)
 
 Pass `nil` as the theme to use `DefaultTheme()` with no overrides.
 
-| Field             | Type       | Default                      | Description                                 |
-|-------------------|------------|------------------------------|---------------------------------------------|
-| `PrimaryColor`    | `string`   | `#2563eb`                    | Headings, accents.                          |
-| `SecondaryColor`  | `string`   | `#64748b`                    | Secondary text and borders.                 |
-| `BackgroundColor` | `string`   | `#ffffff`                    | Page background.                            |
-| `TextColor`       | `string`   | `#1e293b`                    | Body text.                                  |
-| `AccentColor`     | `string`   | `#10b981`                    | Highlight elements.                         |
-| `FontFamily`      | `string`   | System UI stack              | CSS `font-family` value.                    |
-| `BorderRadius`    | `string`   | `0.5rem`                     | Card corner radius.                         |
-| `ChartColors`     | `[]string` | Eight-color palette          | Colors cycled through chart series.         |
-| `ShadowIntensity` | `string`   | `"medium"`                   | `"none"`, `"subtle"`, `"medium"`, `"strong"`. |
-| `EnableAnimations`| `bool`     | `true`                       | CSS entry animations on cards.              |
-| `EnableGradients` | `bool`     | `false`                      | Gradient fills on chart bars.               |
+| Field             | Type       | Default                      | Description                                                         |
+|-------------------|------------|------------------------------|---------------------------------------------------------------------|
+| `PrimaryColor`    | `string`   | `#2563eb`                    | Headings, accents.                                                  |
+| `SecondaryColor`  | `string`   | `#64748b`                    | Secondary text and borders.                                         |
+| `BackgroundColor` | `string`   | `#f1f5f9`                    | Page background.                                                    |
+| `CardColor`       | `string`   | `#ffffff`                    | Element card/tile background.                                       |
+| `TextColor`       | `string`   | `#1e293b`                    | Body text.                                                          |
+| `AccentColor`     | `string`   | `#10b981`                    | Accent color; reserved for use in custom elements (see extensibility). |
+| `FontFamily`      | `string`   | System UI stack              | CSS `font-family` value.                                            |
+| `BorderRadius`    | `string`   | `0.5rem`                     | Card corner radius.                                                 |
+| `ChartColors`     | `[]string` | Eight-color palette          | Colors cycled through chart series.                                 |
+| `ShadowIntensity` | `string`   | `"medium"`                   | `"none"`, `"subtle"`, `"medium"`, `"strong"`.                      |
+| `EnableAnimations`| `bool`     | `true`                       | CSS entry animations on cards.                                      |
+| `EnableGradients` | `bool`     | `false`                      | Adds a linear gradient to the report header background.             |
 
 ## Renderer
 
@@ -377,7 +378,25 @@ For cases where a string is more convenient (tests, in-memory use), use `RenderS
 html, err := rptgen.HtmlRenderer{}.RenderString(report, theme)
 ```
 
-Custom renderers can be implemented by satisfying the `Renderer` interface:
+### Custom elements
+
+Any type that implements the `HTMLRenderer` interface is renderable by `HtmlRenderer`
+without modifying the library. Implement `RenderHTML` to return the HTML fragment and
+any Chart.js initialisation scripts for your element:
+
+```go
+type HTMLRenderer interface {
+    RenderHTML(ctx *HTMLRenderContext) (html string, scripts []string, err error)
+}
+```
+
+`HTMLRenderContext` exposes the active `*Theme`, `NextID` for stable canvas IDs, and
+`ChartColors` for the colour palette.
+
+### Custom document renderers
+
+To produce output in a format other than HTML (e.g. Markdown, PDF), implement the
+`Renderer` interface:
 
 ```go
 type Renderer interface {
