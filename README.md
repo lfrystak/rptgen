@@ -40,11 +40,14 @@ func main() {
     section.AddElement(&rptgen.NumberTile{Title: "Growth", Value: 12.0, Format: "%.1f%%"})
     report.AddSection(section)
 
-    html, err := rptgen.HtmlRenderer{}.Render(report, nil) // nil = default theme
+    f, err := os.Create("report.html")
     if err != nil {
         log.Fatal(err)
     }
-    os.WriteFile("report.html", []byte(html), 0644)
+    defer f.Close()
+    if err := rptgen.HtmlRenderer{}.Render(f, report, nil); err != nil { // nil = default theme
+        log.Fatal(err)
+    }
 }
 ```
 
@@ -312,7 +315,7 @@ theme := rptgen.DefaultTheme()
 theme.PrimaryColor   = "#059669" // override specific fields
 theme.FontFamily     = "Georgia, serif"
 
-html, err := rptgen.HtmlRenderer{}.Render(report, theme)
+err = rptgen.HtmlRenderer{}.Render(f, report, theme)
 ```
 
 Pass `nil` as the theme to use `DefaultTheme()` with no overrides.
@@ -336,13 +339,24 @@ Pass `nil` as the theme to use `DefaultTheme()` with no overrides.
 `HtmlRenderer` is the built-in renderer. It produces a fully self-contained HTML document — all CSS and Chart.js JavaScript are embedded inline.
 
 ```go
-html, err := rptgen.HtmlRenderer{}.Render(report, theme)
+f, err := os.Create("report.html")
+if err != nil {
+    log.Fatal(err)
+}
+defer f.Close()
+err = rptgen.HtmlRenderer{}.Render(f, report, theme)
+```
+
+For cases where a string is more convenient (tests, in-memory use), use `RenderString`:
+
+```go
+html, err := rptgen.HtmlRenderer{}.RenderString(report, theme)
 ```
 
 Custom renderers can be implemented by satisfying the `Renderer` interface:
 
 ```go
 type Renderer interface {
-    Render(report *Report, theme *Theme) (string, error)
+    Render(w io.Writer, report *Report, theme *Theme) error
 }
 ```

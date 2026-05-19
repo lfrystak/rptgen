@@ -1,6 +1,7 @@
 package rptgen
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"os"
@@ -43,6 +44,18 @@ func checkGolden(t *testing.T, name, got string) {
 		}
 		t.Errorf("golden %s: line count differs (got %d, want %d)", name, len(gl), len(wl))
 	}
+}
+
+// renderHTML renders r to a string via the writer-based HtmlRenderer.Render, failing
+// the test immediately on error. It is the canonical way tests exercise Render.
+func renderHTML(t *testing.T, r *Report, theme *Theme) string {
+	t.Helper()
+	var buf bytes.Buffer
+	err := HtmlRenderer{}.Render(&buf, r, theme)
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	return buf.String()
 }
 
 // buildDeterministicReport returns buildFullReport() with a fixed timestamp so golden tests are stable.
@@ -136,10 +149,7 @@ func buildFullReport() *Report {
 
 func TestHtmlSmokeTest(t *testing.T) {
 	r := buildFullReport()
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render returned error: %v", err)
-	}
+	out := renderHTML(t, r, nil)
 	if !strings.HasPrefix(out, "<!DOCTYPE html>") {
 		t.Error("output must start with <!DOCTYPE html>")
 	}
@@ -166,10 +176,7 @@ func TestHtmlSmokeTest(t *testing.T) {
 func TestNoExternalReferences(t *testing.T) {
 	r := buildFullReport()
 	r.LogoURL = "" // no user-supplied URLs
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
+	out := renderHTML(t, r, nil)
 	// Patterns that cause a browser to make a network request.
 	patterns := []string{
 		`src="http://`, `src="https://`,
@@ -193,10 +200,7 @@ func TestHtmlThemeApplication(t *testing.T) {
 	th := DefaultTheme()
 	th.PrimaryColor = "#ff0000"
 
-	out, err := HtmlRenderer{}.Render(r, th)
-	if err != nil {
-		t.Fatalf("Render returned error: %v", err)
-	}
+	out := renderHTML(t, r, th)
 	if !strings.Contains(out, "#ff0000") {
 		t.Error("output must contain the custom primary color #ff0000")
 	}
@@ -208,10 +212,7 @@ func TestHtmlColumnWidths(t *testing.T) {
 		ColumnWidths: []int{1, 2},
 	})
 
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render returned error: %v", err)
-	}
+	out := renderHTML(t, r, nil)
 	if !strings.Contains(out, "1fr 2fr") {
 		t.Error("output must contain '1fr 2fr' for ColumnWidths [1,2]")
 	}
@@ -227,10 +228,7 @@ func TestHtmlEscapingFreeTextNotHTML(t *testing.T) {
 	})
 	r.AddSection(section)
 
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render returned error: %v", err)
-	}
+	out := renderHTML(t, r, nil)
 	if !strings.Contains(out, "&lt;script&gt;") {
 		t.Error("output must contain escaped &lt;script&gt;")
 	}
@@ -249,10 +247,7 @@ func TestHtmlEscapingFreeTextIsHTML(t *testing.T) {
 	})
 	r.AddSection(section)
 
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render returned error: %v", err)
-	}
+	out := renderHTML(t, r, nil)
 	if !strings.Contains(out, "<b>bold</b>") {
 		t.Error("output must contain verbatim <b>bold</b> for IsHTML: true")
 	}
@@ -260,10 +255,7 @@ func TestHtmlEscapingFreeTextIsHTML(t *testing.T) {
 
 func TestHtmlNilThemeDoesNotPanic(t *testing.T) {
 	r := buildFullReport()
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render returned error: %v", err)
-	}
+	out := renderHTML(t, r, nil)
 	if !strings.Contains(out, DefaultTheme().PrimaryColor) {
 		t.Error("nil theme must apply default primary color")
 	}
@@ -272,10 +264,7 @@ func TestHtmlNilThemeDoesNotPanic(t *testing.T) {
 // --- golden file tests ---
 
 func TestGoldenFullReport(t *testing.T) {
-	out, err := HtmlRenderer{}.Render(buildDeterministicReport(), nil)
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
+	out := renderHTML(t, buildDeterministicReport(), nil)
 	checkGolden(t, "full_report.html", out)
 }
 
@@ -285,10 +274,7 @@ func TestGoldenCustomTheme(t *testing.T) {
 	th.EnableGradients = true
 	th.EnableAnimations = false
 	th.ShadowIntensity = "strong"
-	out, err := HtmlRenderer{}.Render(buildDeterministicReport(), th)
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
+	out := renderHTML(t, buildDeterministicReport(), th)
 	checkGolden(t, "custom_theme.html", out)
 }
 
@@ -692,10 +678,7 @@ func TestChartLabelInjectionEscaped(t *testing.T) {
 	}))
 	r.AddSection(section)
 
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
+	out := renderHTML(t, r, nil)
 	// Find the <script> block containing chart init code.
 	scriptOpen := strings.Index(out, "<script>\n")
 	scriptClose := strings.LastIndex(out, "</script>")
@@ -718,10 +701,7 @@ func TestRenderReportFooterAndLogo(t *testing.T) {
 	r.LogoURL = "https://example.com/logo.png"
 	r.AddSection(&Section{})
 
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
+	out := renderHTML(t, r, nil)
 	if !strings.Contains(out, "Confidential footer") {
 		t.Error("output must contain footer text")
 	}
@@ -741,10 +721,7 @@ func TestNumberTileWithSubtitle(t *testing.T) {
 	})
 	r.AddSection(section)
 
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
+	out := renderHTML(t, r, nil)
 	if !strings.Contains(out, "vs last quarter") {
 		t.Error("output must render number tile subtitle")
 	}
@@ -761,10 +738,7 @@ func TestDateTileWithSubtitle(t *testing.T) {
 	})
 	r.AddSection(section)
 
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
+	out := renderHTML(t, r, nil)
 	if !strings.Contains(out, "fiscal year end") {
 		t.Error("output must render date tile subtitle")
 	}
@@ -776,10 +750,7 @@ func TestEnableGradientsCSSProducesGradient(t *testing.T) {
 	r := NewReport("G")
 	r.AddSection(&Section{})
 
-	out, err := HtmlRenderer{}.Render(r, th)
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
+	out := renderHTML(t, r, th)
 	if !strings.Contains(out, "linear-gradient") {
 		t.Error("output must contain linear-gradient in CSS when EnableGradients=true")
 	}
@@ -791,10 +762,7 @@ func TestEnableAnimationsOffOmitsFadeIn(t *testing.T) {
 	r := NewReport("A")
 	r.AddSection(&Section{})
 
-	out, err := HtmlRenderer{}.Render(r, th)
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
+	out := renderHTML(t, r, th)
 	if strings.Contains(out, "@keyframes fadeIn") {
 		t.Error("output must not include fadeIn keyframe when EnableAnimations=false")
 	}
@@ -808,7 +776,8 @@ func TestRenderElementUnknownType(t *testing.T) {
 	section.AddElement(&customTestElement{BaseElement: newBaseElement()})
 	r.AddSection(section)
 
-	_, err := HtmlRenderer{}.Render(r, nil)
+	var buf bytes.Buffer
+	err := HtmlRenderer{}.Render(&buf, r, nil)
 	if err == nil {
 		t.Fatal("expected error for unknown element type, got nil")
 	}
@@ -837,10 +806,7 @@ func TestTableNonStringAnyCell(t *testing.T) {
 	}, []string{"count", "ratio"}))
 	r.AddSection(section)
 
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
+	out := renderHTML(t, r, nil)
 	if !strings.Contains(out, ">42<") {
 		t.Error("output must contain int cell value 42")
 	}
@@ -860,10 +826,7 @@ func TestCustomHTMLRendererElement(t *testing.T) {
 	section.AddElement(&greenBoxElement{BaseElement: newBaseElement()})
 	r.AddSection(section)
 
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render returned error for custom HTMLRenderer element: %v", err)
-	}
+	out := renderHTML(t, r, nil)
 	if !strings.Contains(out, "background:green") {
 		t.Error("output must contain the custom element's HTML (background:green)")
 	}
@@ -884,10 +847,7 @@ func TestScatterChartRenders(t *testing.T) {
 	}))
 	r.AddSection(section)
 
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render returned error for ScatterChart: %v", err)
-	}
+	out := renderHTML(t, r, nil)
 	if !strings.Contains(out, `"type":"scatter"`) {
 		t.Error("output must contain Chart.js scatter type")
 	}
@@ -960,5 +920,55 @@ func TestHTMLRenderContextChartColors(t *testing.T) {
 	}
 	if colors[0] != defaultChartColors[0] {
 		t.Errorf("default color[0]: got %q, want %q", colors[0], defaultChartColors[0])
+	}
+}
+
+// --- spec 006: Render writes to io.Writer; RenderString wraps it ---
+
+// TestRenderWritesToWriter verifies that Render streams the document to the supplied writer.
+func TestRenderWritesToWriter(t *testing.T) {
+	r := NewReport("Writer Test")
+	r.AddSection(&Section{})
+	var buf bytes.Buffer
+	err := HtmlRenderer{}.Render(&buf, r, nil)
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	got := buf.String()
+	if !strings.HasPrefix(got, "<!DOCTYPE html>") {
+		t.Error("writer output must start with <!DOCTYPE html>")
+	}
+	if !strings.Contains(got, "Writer Test") {
+		t.Error("writer output must contain the report title")
+	}
+}
+
+// TestRenderStringMatchesWriter verifies that RenderString produces the same output as Render.
+func TestRenderStringMatchesWriter(t *testing.T) {
+	r := buildDeterministicReport()
+	var buf bytes.Buffer
+	err := HtmlRenderer{}.Render(&buf, r, nil)
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	got, err := HtmlRenderer{}.RenderString(r, nil)
+	if err != nil {
+		t.Fatalf("RenderString: %v", err)
+	}
+	if got != buf.String() {
+		t.Error("RenderString output must match Render output")
+	}
+}
+
+// TestRenderErrorPropagated verifies that a render error is returned from Render.
+func TestRenderErrorPropagated(t *testing.T) {
+	r := NewReport("Err")
+	section := &Section{}
+	section.AddElement(&customTestElement{BaseElement: newBaseElement()})
+	r.AddSection(section)
+	var buf bytes.Buffer
+	err := HtmlRenderer{}.Render(&buf, r, nil)
+	if err == nil {
+		t.Fatal("expected error for unknown element type, got nil")
 	}
 }

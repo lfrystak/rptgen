@@ -194,11 +194,15 @@ Key focus areas for Q3:
 }
 
 func write(path string, report *rptgen.Report, theme *rptgen.Theme) {
-	html, err := rptgen.HtmlRenderer{}.Render(report, theme)
+	f, err := os.Create(path)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := os.WriteFile(path, []byte(html), 0644); err != nil {
+	err = rptgen.HtmlRenderer{}.Render(f, report, theme)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err = f.Close(); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("wrote %s", path)
