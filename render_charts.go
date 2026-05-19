@@ -2,6 +2,98 @@ package rptgen
 
 import "sort"
 
+// RenderHTML implements HTMLRenderer for BarChart.
+func (e *BarChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
+	id := ctx.NextID(e.Title)
+	script, err := renderBarChartScript(id, e, ctx.Theme)
+	if err != nil {
+		return "", nil, err
+	}
+	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
+}
+
+// RenderHTML implements HTMLRenderer for LineChart.
+func (e *LineChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
+	id := ctx.NextID(e.Title)
+	script, err := renderLineChartScript(id, e, ctx.Theme)
+	if err != nil {
+		return "", nil, err
+	}
+	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
+}
+
+// RenderHTML implements HTMLRenderer for PieChart.
+func (e *PieChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
+	id := ctx.NextID(e.Title)
+	script, err := renderPieChartScript(id, e, ctx.Theme)
+	if err != nil {
+		return "", nil, err
+	}
+	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
+}
+
+// RenderHTML implements HTMLRenderer for StackedBarChart.
+func (e *StackedBarChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
+	id := ctx.NextID(e.Title)
+	script, err := renderStackedBarChartScript(id, e, ctx.Theme)
+	if err != nil {
+		return "", nil, err
+	}
+	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
+}
+
+// RenderHTML implements HTMLRenderer for ScatterChart.
+// This is the acceptance test for spec 005: a new chart type supplies its own rendering
+// by implementing HTMLRenderer — no modification to renderElement required.
+func (e *ScatterChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
+	colors := ctx.ChartColors()
+	points := make([]scatterPoint, len(e.Points))
+	for i, p := range e.Points {
+		points[i] = scatterPoint(p)
+	}
+	ratio := 2.0
+	cfg := scatterConfig{
+		Type: "scatter",
+		Data: scatterData{
+			Datasets: []scatterDataset{{
+				Label:           e.Title,
+				Data:            points,
+				BackgroundColor: colors[0],
+			}},
+		},
+		Options: chartOptions{Responsive: true, AspectRatio: &ratio},
+	}
+	id := ctx.NextID(e.Title)
+	script, err := ChartInitScript(id, cfg)
+	if err != nil {
+		return "", nil, err
+	}
+	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
+}
+
+// scatterConfig is ScatterChart's own Chart.js config. It uses a different data shape
+// ({x,y} objects instead of flat float64 slices) and must not reuse chartConfig.
+type scatterConfig struct {
+	Type    string       `json:"type"`
+	Data    scatterData  `json:"data"`
+	Options chartOptions `json:"options"`
+}
+
+type scatterData struct {
+	Datasets []scatterDataset `json:"datasets"`
+}
+
+type scatterDataset struct {
+	Label           string         `json:"label,omitempty"`
+	Data            []scatterPoint `json:"data"`
+	BackgroundColor string         `json:"backgroundColor,omitempty"`
+}
+
+type scatterPoint struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
 func renderBarChartScript(id string, e *BarChart, theme *Theme) (string, error) {
 	colors := chartColors(theme)
 	labels := make([]string, len(e.Data))
@@ -32,7 +124,7 @@ func renderBarChartScript(id string, e *BarChart, theme *Theme) (string, error) 
 			Plugins:     &chartPlugins{Legend: &chartLegend{Display: false}},
 		},
 	}
-	return chartInitScript(id, cfg)
+	return ChartInitScript(id, cfg)
 }
 
 func renderLineChartScript(id string, e *LineChart, theme *Theme) (string, error) {
@@ -88,7 +180,7 @@ func renderLineChartScript(id string, e *LineChart, theme *Theme) (string, error
 			Plugins:     &chartPlugins{Legend: &chartLegend{Display: len(e.Series) > 1}},
 		},
 	}
-	return chartInitScript(id, cfg)
+	return ChartInitScript(id, cfg)
 }
 
 func renderPieChartScript(id string, e *PieChart, theme *Theme) (string, error) {
@@ -116,7 +208,7 @@ func renderPieChartScript(id string, e *PieChart, theme *Theme) (string, error) 
 		},
 		Options: chartOptions{Responsive: true, AspectRatio: &ratio},
 	}
-	return chartInitScript(id, cfg)
+	return ChartInitScript(id, cfg)
 }
 
 func renderStackedBarChartScript(id string, e *StackedBarChart, theme *Theme) (string, error) {
@@ -170,5 +262,5 @@ func renderStackedBarChartScript(id string, e *StackedBarChart, theme *Theme) (s
 			Scales:      &chartScales{X: stacked, Y: stacked},
 		},
 	}
-	return chartInitScript(id, cfg)
+	return ChartInitScript(id, cfg)
 }

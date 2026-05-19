@@ -99,6 +99,38 @@ func DefaultTheme() *Theme {
 	}
 }
 
+// HTMLRenderContext is the rendering environment HtmlRenderer passes to each Element.
+// Elements that implement HTMLRenderer receive this value and use it to produce
+// their HTML fragment and any Chart.js initialisation scripts.
+type HTMLRenderContext struct {
+	Theme        *Theme
+	SectionTitle string
+	idGen        *idGen
+}
+
+// NextID returns a stable, unique HTML element ID for a chart canvas with the given
+// title within the current section. Call it once per chart element.
+func (ctx *HTMLRenderContext) NextID(elementTitle string) string {
+	return ctx.idGen.next(ctx.SectionTitle, elementTitle)
+}
+
+// ChartColors returns the active color palette: the theme's ChartColors when set,
+// otherwise the package defaults. Custom chart elements use this to colour datasets.
+func (ctx *HTMLRenderContext) ChartColors() []string {
+	return chartColors(ctx.Theme)
+}
+
+// HTMLRenderer is the render-dispatch interface for HTML output.
+// Implement it on any Element to make that element renderable by HtmlRenderer
+// without modifying the central dispatch function.
+//
+// RenderHTML returns the HTML fragment for the element and any Chart.js
+// initialisation scripts to be injected at the bottom of the document.
+// Return a non-nil error to propagate a render failure to the caller.
+type HTMLRenderer interface {
+	RenderHTML(ctx *HTMLRenderContext) (html string, scripts []string, err error)
+}
+
 // Renderer generates a report document from a Report and an optional Theme.
 // Implementations must call DefaultTheme() when theme is nil.
 type Renderer interface {
