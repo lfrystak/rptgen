@@ -47,8 +47,8 @@ func TestAddSection(t *testing.T) {
 
 func TestSectionAddElement(t *testing.T) {
 	s := &Section{}
-	e1 := &NumberTile{BaseElement: newBaseElement(), Title: "A"}
-	e2 := &NumberTile{BaseElement: newBaseElement(), Title: "B"}
+	e1 := &NumberTile{Title: "A"}
+	e2 := &NumberTile{Title: "B"}
 
 	returned := s.AddElement(e1).AddElement(e2)
 	if returned != s {

@@ -43,11 +43,11 @@ func TestElementTypeStrings(t *testing.T) {
 		elem Element
 		want string
 	}{
-		{&NumberTile{BaseElement: newBaseElement()}, "NumberTile"},
-		{&DateTile{BaseElement: newBaseElement()}, "DateTile"},
-		{&FreeText{BaseElement: newBaseElement()}, "FreeText"},
-		{&Table{BaseElement: newBaseElement()}, "Table"},
-		{&Canvas{BaseElement: newBaseElement()}, "Canvas"},
+		{&NumberTile{}, "NumberTile"},
+		{&DateTile{}, "DateTile"},
+		{&FreeText{}, "FreeText"},
+		{&Table{}, "Table"},
+		{&Canvas{}, "Canvas"},
 		{NewBarChart("", nil), "BarChart"},
 		{NewLineChart("", nil), "LineChart"},
 		{NewPieChart("", nil), "PieChart"},

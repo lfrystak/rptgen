@@ -28,7 +28,6 @@ func DataPointsFromMap(m map[string]float64) []DataPoint {
 
 // ChartBase is embedded by all chart types and holds common chart fields.
 type ChartBase struct {
-	BaseElement
 	Title   string
 	Tooltip string // optional hover tooltip on the chart card (not on data points)
 }
@@ -45,7 +44,7 @@ func (b *BarChart) ElementType() string { return "BarChart" }
 
 func NewBarChart(title string, data []DataPoint) *BarChart {
 	return &BarChart{
-		ChartBase: ChartBase{BaseElement: newBaseElement(), Title: title},
+		ChartBase: ChartBase{Title: title},
 		Data:      data,
 	}
 }
@@ -70,7 +69,7 @@ func (l *LineChart) ElementType() string { return "LineChart" }
 // NewLineChart creates a multi-series line chart.
 func NewLineChart(title string, series []LineSeries) *LineChart {
 	return &LineChart{
-		ChartBase:  ChartBase{BaseElement: newBaseElement(), Title: title},
+		ChartBase:  ChartBase{Title: title},
 		Series:     series,
 		ShowPoints: true,
 	}
@@ -79,7 +78,7 @@ func NewLineChart(title string, series []LineSeries) *LineChart {
 // NewLineChartSingle wraps a single data series, using the chart title as the series name.
 func NewLineChartSingle(title string, points []DataPoint) *LineChart {
 	return &LineChart{
-		ChartBase:  ChartBase{BaseElement: newBaseElement(), Title: title},
+		ChartBase:  ChartBase{Title: title},
 		Series:     []LineSeries{{Name: title, Points: points}},
 		ShowPoints: true,
 	}
@@ -97,7 +96,7 @@ func (p *PieChart) ElementType() string { return "PieChart" }
 
 func NewPieChart(title string, data []DataPoint) *PieChart {
 	return &PieChart{
-		ChartBase: ChartBase{BaseElement: newBaseElement(), Title: title},
+		ChartBase: ChartBase{Title: title},
 		Data:      data,
 	}
 }
@@ -120,7 +119,7 @@ func (s *StackedBarChart) ElementType() string { return "StackedBarChart" }
 
 func NewStackedBarChart(title string, series []StackedBarSeries) *StackedBarChart {
 	return &StackedBarChart{
-		ChartBase: ChartBase{BaseElement: newBaseElement(), Title: title},
+		ChartBase: ChartBase{Title: title},
 		Series:    series,
 	}
 }
@@ -146,7 +145,7 @@ func (s *ScatterChart) ElementType() string { return "ScatterChart" }
 // NewScatterChart creates a scatter chart with the given X/Y data points.
 func NewScatterChart(title string, points []ScatterPoint) *ScatterChart {
 	return &ScatterChart{
-		ChartBase: ChartBase{BaseElement: newBaseElement(), Title: title},
+		ChartBase: ChartBase{Title: title},
 		Points:    points,
 	}
 }

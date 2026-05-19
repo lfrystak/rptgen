@@ -24,7 +24,6 @@ func TestNumberTileFormatValue(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.tile.BaseElement = newBaseElement()
 			got := tc.tile.FormatValue()
 			if got != tc.want {
 				t.Errorf("got %q, want %q", got, tc.want)
@@ -39,7 +38,7 @@ func TestDateTileFormatValue(t *testing.T) {
 	ts := time.Date(2024, 3, 15, 9, 5, 0, 0, time.UTC)
 
 	t.Run("empty format uses default layout", func(t *testing.T) {
-		d := &DateTile{BaseElement: newBaseElement(), Value: ts, Format: ""}
+		d := &DateTile{Value: ts, Format: ""}
 		got := d.FormatValue()
 		if got != "2024-03-15 09:05:00" {
 			t.Errorf("got %q", got)
@@ -47,7 +46,7 @@ func TestDateTileFormatValue(t *testing.T) {
 	})
 
 	t.Run("date-only layout", func(t *testing.T) {
-		d := &DateTile{BaseElement: newBaseElement(), Value: ts, Format: "2006-01-02"}
+		d := &DateTile{Value: ts, Format: "2006-01-02"}
 		got := d.FormatValue()
 		if got != "2024-03-15" {
 			t.Errorf("got %q", got)
@@ -55,7 +54,7 @@ func TestDateTileFormatValue(t *testing.T) {
 	})
 
 	t.Run("zero time returns empty string", func(t *testing.T) {
-		d := &DateTile{BaseElement: newBaseElement()}
+		d := &DateTile{}
 		got := d.FormatValue()
 		if got != "" {
 			t.Errorf("got %q, want empty", got)

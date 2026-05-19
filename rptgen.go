@@ -10,11 +10,6 @@ type Element interface {
 	ElementType() string
 }
 
-// BaseElement is embedded by all concrete element types.
-type BaseElement struct{}
-
-func newBaseElement() BaseElement { return BaseElement{} }
-
 // Report is the top-level document container.
 type Report struct {
 	Title       string
