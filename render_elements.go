@@ -7,36 +7,48 @@ import (
 )
 
 // renderElement dispatches to the correct element renderer and returns HTML + any chart init scripts.
-func renderElement(elem Element, theme *Theme, gen *idGen, sectionTitle string) (string, []string) {
+func renderElement(elem Element, theme *Theme, gen *idGen, sectionTitle string) (string, []string, error) {
 	switch e := elem.(type) {
 	case *NumberTile:
-		return renderNumberTile(e), nil
+		return renderNumberTile(e), nil, nil
 	case *DateTile:
-		return renderDateTile(e), nil
+		return renderDateTile(e), nil, nil
 	case *FreeText:
-		return renderFreeText(e), nil
+		return renderFreeText(e), nil, nil
 	case *Table:
-		return renderTable(e), nil
+		return renderTable(e), nil, nil
 	case *Canvas:
 		return renderCanvas(e, theme, gen, sectionTitle)
 	case *BarChart:
 		id := gen.next(sectionTitle, e.Title)
-		script := renderBarChartScript(id, e, theme)
-		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}
+		script, err := renderBarChartScript(id, e, theme)
+		if err != nil {
+			return "", nil, err
+		}
+		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 	case *LineChart:
 		id := gen.next(sectionTitle, e.Title)
-		script := renderLineChartScript(id, e, theme)
-		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}
+		script, err := renderLineChartScript(id, e, theme)
+		if err != nil {
+			return "", nil, err
+		}
+		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 	case *PieChart:
 		id := gen.next(sectionTitle, e.Title)
-		script := renderPieChartScript(id, e, theme)
-		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}
+		script, err := renderPieChartScript(id, e, theme)
+		if err != nil {
+			return "", nil, err
+		}
+		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 	case *StackedBarChart:
 		id := gen.next(sectionTitle, e.Title)
-		script := renderStackedBarChartScript(id, e, theme)
-		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}
+		script, err := renderStackedBarChartScript(id, e, theme)
+		if err != nil {
+			return "", nil, err
+		}
+		return renderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 	default:
-		return fmt.Sprintf("<div><!-- unknown element: %s --></div>\n", html.EscapeString(elem.ElementType())), nil
+		return "", nil, fmt.Errorf("rptgen: unknown element type %q", elem.ElementType())
 	}
 }
 
@@ -106,20 +118,23 @@ func renderTable(e *Table) string {
 	return b.String()
 }
 
-func renderCanvas(e *Canvas, theme *Theme, gen *idGen, sectionTitle string) (string, []string) {
+func renderCanvas(e *Canvas, theme *Theme, gen *idGen, sectionTitle string) (string, []string, error) {
 	colTemplate := columnWidthsToCSS(e.ColumnWidths)
 	var b strings.Builder
 	var allScripts []string
 	fmt.Fprintf(&b, "          <div class=\"element canvas-grid\" style=\"--col-template: %s\">\n", colTemplate)
 	for _, child := range e.Elements {
 		b.WriteString("            <div class=\"element-wrapper\">\n")
-		rendered, scripts := renderElement(child, theme, gen, sectionTitle)
+		rendered, scripts, err := renderElement(child, theme, gen, sectionTitle)
+		if err != nil {
+			return "", nil, err
+		}
 		b.WriteString(rendered)
 		allScripts = append(allScripts, scripts...)
 		b.WriteString("            </div>\n")
 	}
 	b.WriteString("          </div>\n")
-	return b.String(), allScripts
+	return b.String(), allScripts, nil
 }
 
 func renderChartContainer(id, title, tooltip string) string {

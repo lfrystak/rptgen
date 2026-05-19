@@ -289,7 +289,11 @@ func TestBarChartScriptLabelsAndData(t *testing.T) {
 		{Label: "Apples", Value: 50},
 		{Label: "Cherries", Value: 20},
 	})
-	cfg := parseChartScript(t, renderBarChartScript("id", chart, DefaultTheme()))
+	script, err := renderBarChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
 
 	if cfg.Type != "bar" {
 		t.Errorf("Type: got %q, want bar", cfg.Type)
@@ -327,7 +331,11 @@ func TestBarChartPreservesInsertionOrder(t *testing.T) {
 		{Label: "Jan", Value: 1},
 		{Label: "Feb", Value: 2},
 	})
-	cfg := parseChartScript(t, renderBarChartScript("id", chart, DefaultTheme()))
+	script, err := renderBarChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
 	want := []string{"Mar", "Jan", "Feb"}
 	if len(cfg.Data.Labels) != len(want) {
 		t.Fatalf("Labels: got %v, want %v", cfg.Data.Labels, want)
@@ -345,7 +353,11 @@ func TestPieChartPreservesInsertionOrder(t *testing.T) {
 		{Label: "Q1", Value: 10},
 		{Label: "Q2", Value: 20},
 	})
-	cfg := parseChartScript(t, renderPieChartScript("id", chart, DefaultTheme()))
+	script, err := renderPieChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderPieChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
 	want := []string{"Q3", "Q1", "Q2"}
 	if len(cfg.Data.Labels) != len(want) {
 		t.Fatalf("Labels: got %v, want %v", cfg.Data.Labels, want)
@@ -363,7 +375,11 @@ func TestLineChartSinglePreservesInsertionOrder(t *testing.T) {
 		{Label: "April", Value: 55000},
 		{Label: "May", Value: 61000},
 	})
-	cfg := parseChartScript(t, renderLineChartScript("id", lc, DefaultTheme()))
+	script, err := renderLineChartScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
 	want := []string{"June", "April", "May"}
 	if len(cfg.Data.Labels) != len(want) {
 		t.Fatalf("Labels: got %v, want %v", cfg.Data.Labels, want)
@@ -381,7 +397,11 @@ func TestBarChartScriptHorizontal(t *testing.T) {
 		Data:         []DataPoint{{Label: "A", Value: 1}},
 		IsHorizontal: true,
 	}
-	cfg := parseChartScript(t, renderBarChartScript("id", chart, DefaultTheme()))
+	script, err := renderBarChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
 	if cfg.Options.IndexAxis != "y" {
 		t.Errorf("IndexAxis: got %q, want y for horizontal bar", cfg.Options.IndexAxis)
 	}
@@ -391,7 +411,11 @@ func TestBarChartScriptHorizontal(t *testing.T) {
 
 func TestPieChartScriptTypeToggle(t *testing.T) {
 	pie := NewPieChart("P", []DataPoint{{Label: "A", Value: 40}, {Label: "B", Value: 60}})
-	cfgPie := parseChartScript(t, renderPieChartScript("id", pie, DefaultTheme()))
+	pieScript, err := renderPieChartScript("id", pie, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderPieChartScript: %v", err)
+	}
+	cfgPie := parseChartScript(t, pieScript)
 	if cfgPie.Type != "pie" {
 		t.Errorf("pie Type: got %q, want pie", cfgPie.Type)
 	}
@@ -401,7 +425,11 @@ func TestPieChartScriptTypeToggle(t *testing.T) {
 		Data:      []DataPoint{{Label: "A", Value: 40}, {Label: "B", Value: 60}},
 		IsDonut:   true,
 	}
-	cfgDonut := parseChartScript(t, renderPieChartScript("id", donut, DefaultTheme()))
+	donutScript, err := renderPieChartScript("id", donut, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderPieChartScript (donut): %v", err)
+	}
+	cfgDonut := parseChartScript(t, donutScript)
 	if cfgDonut.Type != "doughnut" {
 		t.Errorf("donut Type: got %q, want doughnut", cfgDonut.Type)
 	}
@@ -414,7 +442,11 @@ func TestLineChartScriptMultiSeriesLabels(t *testing.T) {
 		{Name: "Alpha", Points: []DataPoint{{Label: "Q1", Value: 10}, {Label: "Q2", Value: 20}}},
 		{Name: "Beta", Points: []DataPoint{{Label: "Q2", Value: 5}, {Label: "Q3", Value: 15}}},
 	})
-	cfg := parseChartScript(t, renderLineChartScript("id", lc, DefaultTheme()))
+	script, err := renderLineChartScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
 
 	// legend visible for multi-series
 	if cfg.Options.Plugins == nil || cfg.Options.Plugins.Legend == nil || !cfg.Options.Plugins.Legend.Display {
@@ -442,7 +474,11 @@ func TestLineChartScriptMultiSeriesLabels(t *testing.T) {
 func TestLineChartScriptShowPointsFalse(t *testing.T) {
 	lc := NewLineChartSingle("S", []DataPoint{{Label: "Jan", Value: 1}})
 	lc.ShowPoints = false
-	cfg := parseChartScript(t, renderLineChartScript("id", lc, DefaultTheme()))
+	script, err := renderLineChartScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
 
 	if len(cfg.Data.Datasets) != 1 {
 		t.Fatalf("Datasets: got %d, want 1", len(cfg.Data.Datasets))
@@ -463,7 +499,11 @@ func TestStackedBarChartScriptAxesAndOrder(t *testing.T) {
 		{Category: "Q1", Values: map[string]float64{"North": 10, "South": 20}},
 		{Category: "Q2", Values: map[string]float64{"North": 15, "South": 25}},
 	})
-	cfg := parseChartScript(t, renderStackedBarChartScript("id", s, DefaultTheme()))
+	script, err := renderStackedBarChartScript("id", s, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderStackedBarChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
 
 	if cfg.Type != "bar" {
 		t.Errorf("Type: got %q, want bar", cfg.Type)
@@ -510,7 +550,11 @@ func TestStackedBarChartScriptHorizontal(t *testing.T) {
 		Series:       []StackedBarSeries{{Category: "C1", Values: map[string]float64{"S1": 1}}},
 		IsHorizontal: true,
 	}
-	cfg := parseChartScript(t, renderStackedBarChartScript("id", s, DefaultTheme()))
+	script, err := renderStackedBarChartScript("id", s, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderStackedBarChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
 	if cfg.Options.IndexAxis != "y" {
 		t.Errorf("IndexAxis: got %q, want y for horizontal stacked bar", cfg.Options.IndexAxis)
 	}
@@ -752,12 +796,22 @@ func TestRenderElementUnknownType(t *testing.T) {
 	section.AddElement(&customTestElement{BaseElement: newBaseElement()})
 	r.AddSection(section)
 
-	out, err := HtmlRenderer{}.Render(r, nil)
-	if err != nil {
-		t.Fatalf("Render: %v", err)
+	_, err := HtmlRenderer{}.Render(r, nil)
+	if err == nil {
+		t.Fatal("expected error for unknown element type, got nil")
 	}
-	if !strings.Contains(out, "unknown element") {
-		t.Error("output must contain 'unknown element' comment for unrecognized element types")
+	if !strings.Contains(err.Error(), "unknown element type") {
+		t.Errorf("error must mention 'unknown element type', got: %v", err)
+	}
+}
+
+// --- chartInitScript error path ---
+
+func TestChartInitScriptMarshalError(t *testing.T) {
+	// channels are not JSON-marshalable; this exercises the propagated error path.
+	_, err := chartInitScript("id", make(chan int))
+	if err == nil {
+		t.Fatal("expected error for unmarshalable config, got nil")
 	}
 }
 

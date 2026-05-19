@@ -1,6 +1,7 @@
 package rptgen
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -104,23 +105,26 @@ func TestNewTableFromColumns(t *testing.T) {
 		"x": {10, 20, 30},
 		"y": {"a", "b", "c"},
 	}
-	tbl := NewTableFromColumns("T", data)
-
+	tbl, err := NewTableFromColumns("T", data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if len(tbl.Rows) != 3 {
 		t.Errorf("Rows: got len %d, want 3", len(tbl.Rows))
 	}
 }
 
-func TestNewTableFromColumnsPanicsOnMismatch(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("expected panic on mismatched column lengths")
-		}
-	}()
-	NewTableFromColumns("T", map[string][]any{
+func TestNewTableFromColumnsErrorOnMismatch(t *testing.T) {
+	_, err := NewTableFromColumns("T", map[string][]any{
 		"x": {1, 2},
 		"y": {1},
 	})
+	if err == nil {
+		t.Fatal("expected error on mismatched column lengths, got nil")
+	}
+	if !strings.Contains(err.Error(), "different lengths") {
+		t.Errorf("error should mention 'different lengths', got: %v", err)
+	}
 }
 
 func TestNewTableFromColumnsRowValues(t *testing.T) {
@@ -128,7 +132,10 @@ func TestNewTableFromColumnsRowValues(t *testing.T) {
 		"name":  {"Alice", "Bob"},
 		"score": {95, 87},
 	}
-	tbl := NewTableFromColumns("T", data)
+	tbl, err := NewTableFromColumns("T", data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	// columns sorted alphabetically: name, score
 	if len(tbl.Columns) != 2 || tbl.Columns[0] != "name" || tbl.Columns[1] != "score" {
@@ -152,7 +159,10 @@ func TestNewTableFromColumnsRowValues(t *testing.T) {
 }
 
 func TestNewTableFromColumnsEmpty(t *testing.T) {
-	tbl := NewTableFromColumns("T", map[string][]any{})
+	tbl, err := NewTableFromColumns("T", map[string][]any{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if len(tbl.Rows) != 0 {
 		t.Errorf("Rows: got %d, want 0", len(tbl.Rows))
 	}
@@ -166,7 +176,10 @@ func TestNewTableFromColumnsNonStringAny(t *testing.T) {
 		"int_val":   {42, 100},
 		"float_val": {3.14, 2.71},
 	}
-	tbl := NewTableFromColumns("T", data)
+	tbl, err := NewTableFromColumns("T", data)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	if len(tbl.Rows) != 2 {
 		t.Fatalf("Rows: got %d, want 2", len(tbl.Rows))

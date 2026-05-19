@@ -2,7 +2,7 @@ package rptgen
 
 import "sort"
 
-func renderBarChartScript(id string, e *BarChart, theme *Theme) string {
+func renderBarChartScript(id string, e *BarChart, theme *Theme) (string, error) {
 	colors := chartColors(theme)
 	labels := make([]string, len(e.Data))
 	data := make([]float64, len(e.Data))
@@ -35,7 +35,7 @@ func renderBarChartScript(id string, e *BarChart, theme *Theme) string {
 	return chartInitScript(id, cfg)
 }
 
-func renderLineChartScript(id string, e *LineChart, theme *Theme) string {
+func renderLineChartScript(id string, e *LineChart, theme *Theme) (string, error) {
 	colors := chartColors(theme)
 
 	// Collect all unique labels in order of first appearance across all series.
@@ -91,7 +91,7 @@ func renderLineChartScript(id string, e *LineChart, theme *Theme) string {
 	return chartInitScript(id, cfg)
 }
 
-func renderPieChartScript(id string, e *PieChart, theme *Theme) string {
+func renderPieChartScript(id string, e *PieChart, theme *Theme) (string, error) {
 	colors := chartColors(theme)
 	labels := make([]string, len(e.Data))
 	data := make([]float64, len(e.Data))
@@ -119,7 +119,7 @@ func renderPieChartScript(id string, e *PieChart, theme *Theme) string {
 	return chartInitScript(id, cfg)
 }
 
-func renderStackedBarChartScript(id string, e *StackedBarChart, theme *Theme) string {
+func renderStackedBarChartScript(id string, e *StackedBarChart, theme *Theme) (string, error) {
 	colors := chartColors(theme)
 
 	// Collect all series names in order of first appearance.

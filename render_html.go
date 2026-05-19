@@ -77,7 +77,10 @@ func (h HtmlRenderer) Render(report *Report, theme *Theme) (string, error) {
 	sections := make([]template.HTML, 0, len(report.Sections))
 
 	for _, section := range report.Sections {
-		sectionHTML, scripts := renderSectionHTML(section, theme, gen)
+		sectionHTML, scripts, err := renderSectionHTML(section, theme, gen)
+		if err != nil {
+			return "", err
+		}
 		sections = append(sections, template.HTML(sectionHTML))
 		for _, s := range scripts {
 			chartScripts = append(chartScripts, template.JS(s))
@@ -108,7 +111,7 @@ func (h HtmlRenderer) Render(report *Report, theme *Theme) (string, error) {
 }
 
 // renderSectionHTML pre-renders a section to an HTML string and collects chart init scripts.
-func renderSectionHTML(section *Section, theme *Theme, gen *idGen) (string, []string) {
+func renderSectionHTML(section *Section, theme *Theme, gen *idGen) (string, []string, error) {
 	var b strings.Builder
 	var scripts []string
 
@@ -120,14 +123,17 @@ func renderSectionHTML(section *Section, theme *Theme, gen *idGen) (string, []st
 	fmt.Fprintf(&b, "      <div class=\"section-grid\" style=\"--col-template: %s\">\n", colTemplate)
 	for _, elem := range section.Elements {
 		b.WriteString("        <div class=\"element-wrapper\">\n")
-		rendered, elemScripts := renderElement(elem, theme, gen, section.Title)
+		rendered, elemScripts, err := renderElement(elem, theme, gen, section.Title)
+		if err != nil {
+			return "", nil, err
+		}
 		b.WriteString(rendered)
 		scripts = append(scripts, elemScripts...)
 		b.WriteString("        </div>\n")
 	}
 	b.WriteString("      </div>\n")
 	b.WriteString("    </section>\n")
-	return b.String(), scripts
+	return b.String(), scripts, nil
 }
 
 // columnWidthsToCSS converts a slice of proportional widths to a CSS grid-template-columns value.

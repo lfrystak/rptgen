@@ -137,8 +137,8 @@ func NewTableWithColumns(title string, rows []map[string]any, columns []string) 
 }
 
 // NewTableFromColumns converts column-oriented data to row-oriented.
-// Panics if column slices have different lengths.
-func NewTableFromColumns(title string, columns map[string][]any) *Table {
+// Returns an error if column slices have different lengths.
+func NewTableFromColumns(title string, columns map[string][]any) (*Table, error) {
 	rowCount := -1
 	colNames := make([]string, 0, len(columns))
 	for name, vals := range columns {
@@ -146,7 +146,7 @@ func NewTableFromColumns(title string, columns map[string][]any) *Table {
 		if rowCount == -1 {
 			rowCount = len(vals)
 		} else if len(vals) != rowCount {
-			panic("rptgen: NewTableFromColumns: column slices have different lengths")
+			return nil, fmt.Errorf("rptgen: NewTableFromColumns: column slices have different lengths")
 		}
 	}
 	sort.Strings(colNames)
@@ -167,7 +167,7 @@ func NewTableFromColumns(title string, columns map[string][]any) *Table {
 		Title:       title,
 		Columns:     colNames,
 		Rows:        rows,
-	}
+	}, nil
 }
 
 // Canvas is a flexible sub-grid container that holds other elements.
