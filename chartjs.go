@@ -29,13 +29,13 @@ func chartColors(theme *Theme) []string {
 // id MUST be produced by slugify (output charset [a-z0-9-]), which ensures it is safe
 // inside the single-quoted JS string getElementById('...'). Passing an arbitrary string
 // directly as id would allow JS injection.
-func chartInitScript(id string, config any) string {
+func chartInitScript(id string, config any) (string, error) {
 	configJSON, err := json.Marshal(config)
 	if err != nil {
-		configJSON = []byte("{}")
+		return "", fmt.Errorf("rptgen: chartInitScript: marshal failed: %w", err)
 	}
 	return fmt.Sprintf("(function(){var ctx=document.getElementById('%s').getContext('2d');new Chart(ctx,%s);})();",
-		id, string(configJSON))
+		id, string(configJSON)), nil
 }
 
 // --- Shared Chart.js config model ---
