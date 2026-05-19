@@ -100,7 +100,7 @@ func DefaultTheme() *Theme {
 }
 
 // HTMLRenderContext is the rendering environment HtmlRenderer passes to each Element.
-// Elements that implement HTMLRenderable receive this value and use it to produce
+// Elements that implement HTMLRenderer receive this value and use it to produce
 // their HTML fragment and any Chart.js initialisation scripts.
 type HTMLRenderContext struct {
 	Theme        *Theme
@@ -120,14 +120,14 @@ func (ctx *HTMLRenderContext) ChartColors() []string {
 	return chartColors(ctx.Theme)
 }
 
-// HTMLRenderable is the render-dispatch interface for HTML output.
+// HTMLRenderer is the render-dispatch interface for HTML output.
 // Implement it on any Element to make that element renderable by HtmlRenderer
 // without modifying the central dispatch function.
 //
 // RenderHTML returns the HTML fragment for the element and any Chart.js
 // initialisation scripts to be injected at the bottom of the document.
 // Return a non-nil error to propagate a render failure to the caller.
-type HTMLRenderable interface {
+type HTMLRenderer interface {
 	RenderHTML(ctx *HTMLRenderContext) (html string, scripts []string, err error)
 }
 

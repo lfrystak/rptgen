@@ -7,16 +7,16 @@ import (
 )
 
 // renderElement dispatches to the element's own RenderHTML implementation.
-// Any Element that does not implement HTMLRenderable returns an error.
+// Any Element that does not implement HTMLRenderer returns an error.
 func renderElement(elem Element, ctx *HTMLRenderContext) (string, []string, error) {
-	hr, ok := elem.(HTMLRenderable)
+	hr, ok := elem.(HTMLRenderer)
 	if !ok {
 		return "", nil, fmt.Errorf("rptgen: unknown element type %q", elem.ElementType())
 	}
 	return hr.RenderHTML(ctx)
 }
 
-// RenderHTML implements HTMLRenderable for NumberTile.
+// RenderHTML implements HTMLRenderer for NumberTile.
 func (e *NumberTile) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element tile number-tile\">\n")
@@ -30,7 +30,7 @@ func (e *NumberTile) RenderHTML(_ *HTMLRenderContext) (string, []string, error) 
 	return b.String(), nil, nil
 }
 
-// RenderHTML implements HTMLRenderable for DateTile.
+// RenderHTML implements HTMLRenderer for DateTile.
 func (e *DateTile) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element tile date-tile\">\n")
@@ -44,7 +44,7 @@ func (e *DateTile) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	return b.String(), nil, nil
 }
 
-// RenderHTML implements HTMLRenderable for FreeText.
+// RenderHTML implements HTMLRenderer for FreeText.
 func (e *FreeText) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element free-text\">\n")
@@ -59,7 +59,7 @@ func (e *FreeText) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	return b.String(), nil, nil
 }
 
-// RenderHTML implements HTMLRenderable for Table.
+// RenderHTML implements HTMLRenderer for Table.
 func (e *Table) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element table-wrapper\">\n")
@@ -86,7 +86,7 @@ func (e *Table) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	return b.String(), nil, nil
 }
 
-// RenderHTML implements HTMLRenderable for Canvas.
+// RenderHTML implements HTMLRenderer for Canvas.
 func (e *Canvas) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
 	colTemplate := columnWidthsToCSS(e.ColumnWidths)
 	var b strings.Builder

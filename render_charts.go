@@ -2,7 +2,7 @@ package rptgen
 
 import "sort"
 
-// RenderHTML implements HTMLRenderable for BarChart.
+// RenderHTML implements HTMLRenderer for BarChart.
 func (e *BarChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
 	id := ctx.NextID(e.Title)
 	script, err := renderBarChartScript(id, e, ctx.Theme)
@@ -12,7 +12,7 @@ func (e *BarChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) 
 	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 }
 
-// RenderHTML implements HTMLRenderable for LineChart.
+// RenderHTML implements HTMLRenderer for LineChart.
 func (e *LineChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
 	id := ctx.NextID(e.Title)
 	script, err := renderLineChartScript(id, e, ctx.Theme)
@@ -22,7 +22,7 @@ func (e *LineChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error)
 	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 }
 
-// RenderHTML implements HTMLRenderable for PieChart.
+// RenderHTML implements HTMLRenderer for PieChart.
 func (e *PieChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
 	id := ctx.NextID(e.Title)
 	script, err := renderPieChartScript(id, e, ctx.Theme)
@@ -32,7 +32,7 @@ func (e *PieChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) 
 	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 }
 
-// RenderHTML implements HTMLRenderable for StackedBarChart.
+// RenderHTML implements HTMLRenderer for StackedBarChart.
 func (e *StackedBarChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
 	id := ctx.NextID(e.Title)
 	script, err := renderStackedBarChartScript(id, e, ctx.Theme)
@@ -42,9 +42,9 @@ func (e *StackedBarChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, 
 	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 }
 
-// RenderHTML implements HTMLRenderable for ScatterChart.
+// RenderHTML implements HTMLRenderer for ScatterChart.
 // This is the acceptance test for spec 005: a new chart type supplies its own rendering
-// by implementing HTMLRenderable — no modification to renderElement required.
+// by implementing HTMLRenderer — no modification to renderElement required.
 func (e *ScatterChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
 	colors := ctx.ChartColors()
 	points := make([]scatterPoint, len(e.Points))

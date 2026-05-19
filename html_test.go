@@ -72,13 +72,13 @@ func parseChartScript(t *testing.T, script string) chartConfig {
 	return cfg
 }
 
-// customTestElement is a dummy Element that does NOT implement HTMLRenderable, used to
+// customTestElement is a dummy Element that does NOT implement HTMLRenderer, used to
 // exercise the unknown-type error branch in renderElement.
 type customTestElement struct{ BaseElement }
 
 func (c *customTestElement) ElementType() string { return "CustomTestElement" }
 
-// greenBoxElement is a custom Element that implements HTMLRenderable directly.
+// greenBoxElement is a custom Element that implements HTMLRenderer directly.
 // It is used to verify that external element types can participate in HtmlRenderer
 // without modifying renderElement.
 type greenBoxElement struct{ BaseElement }
@@ -849,12 +849,12 @@ func TestTableNonStringAnyCell(t *testing.T) {
 	}
 }
 
-// --- spec 005: open element interface / HTMLRenderable ---
+// --- spec 005: open element interface / HTMLRenderer ---
 
-// TestCustomHTMLRenderableElement verifies that an element type defined outside the
+// TestCustomHTMLRendererElement verifies that an element type defined outside the
 // package (simulated here in the test file) renders correctly via HtmlRenderer once
-// it implements HTMLRenderable — without any modification to renderElement.
-func TestCustomHTMLRenderableElement(t *testing.T) {
+// it implements HTMLRenderer — without any modification to renderElement.
+func TestCustomHTMLRendererElement(t *testing.T) {
 	r := NewReport("Custom")
 	section := &Section{}
 	section.AddElement(&greenBoxElement{BaseElement: newBaseElement()})
@@ -862,7 +862,7 @@ func TestCustomHTMLRenderableElement(t *testing.T) {
 
 	out, err := HtmlRenderer{}.Render(r, nil)
 	if err != nil {
-		t.Fatalf("Render returned error for custom HTMLRenderable element: %v", err)
+		t.Fatalf("Render returned error for custom HTMLRenderer element: %v", err)
 	}
 	if !strings.Contains(out, "background:green") {
 		t.Error("output must contain the custom element's HTML (background:green)")
