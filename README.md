@@ -351,7 +351,7 @@ Pass `nil` as the theme to use `DefaultTheme()` with no overrides.
 | `BackgroundColor` | `string`   | `#f1f5f9`                    | Page background.                                                    |
 | `CardColor`       | `string`   | `#ffffff`                    | Element card/tile background.                                       |
 | `TextColor`       | `string`   | `#1e293b`                    | Body text.                                                          |
-| `AccentColor`     | `string`   | `#10b981`                    | Accent color; reserved for use in custom elements (see extensibility). |
+| `AccentColor`     | `string`   | `#10b981`                    | Tooltip icon color. Also available to custom elements via `HTMLRenderContext.Theme`. |
 | `FontFamily`      | `string`   | System UI stack              | CSS `font-family` value.                                            |
 | `BorderRadius`    | `string`   | `0.5rem`                     | Card corner radius.                                                 |
 | `ChartColors`     | `[]string` | Eight-color palette          | Colors cycled through chart series.                                 |

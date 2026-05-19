@@ -748,6 +748,30 @@ func TestEnableGradientsCSSProducesGradient(t *testing.T) {
 	}
 }
 
+func TestEnableGradientsOffOmitsGradient(t *testing.T) {
+	th := DefaultTheme()
+	th.EnableGradients = false
+	r := NewReport("G")
+	r.AddSection(&Section{})
+
+	out := renderHTML(t, r, th)
+	if strings.Contains(out, "linear-gradient") {
+		t.Error("output must not contain linear-gradient in CSS when EnableGradients=false")
+	}
+}
+
+func TestAccentColorAppearsInOutput(t *testing.T) {
+	th := DefaultTheme()
+	th.AccentColor = "#abcdef"
+	r := NewReport("A")
+	r.AddSection(&Section{})
+
+	out := renderHTML(t, r, th)
+	if !strings.Contains(out, "#abcdef") {
+		t.Error("AccentColor value must appear in rendered output")
+	}
+}
+
 func TestEnableAnimationsOffOmitsFadeIn(t *testing.T) {
 	th := DefaultTheme()
 	th.EnableAnimations = false
