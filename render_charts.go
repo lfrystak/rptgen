@@ -49,7 +49,7 @@ func (e *ScatterChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, err
 	colors := ctx.ChartColors()
 	points := make([]scatterPoint, len(e.Points))
 	for i, p := range e.Points {
-		points[i] = scatterPoint{X: p.X, Y: p.Y}
+		points[i] = scatterPoint(p)
 	}
 	ratio := 2.0
 	cfg := scatterConfig{
