@@ -87,14 +87,14 @@ func parseChartScript(t *testing.T, script string) chartConfig {
 
 // customTestElement is a dummy Element that does NOT implement HTMLRenderer, used to
 // exercise the unknown-type error branch in renderElement.
-type customTestElement struct{ BaseElement }
+type customTestElement struct{}
 
 func (c *customTestElement) ElementType() string { return "CustomTestElement" }
 
 // greenBoxElement is a custom Element that implements HTMLRenderer directly.
 // It is used to verify that external element types can participate in HtmlRenderer
 // without modifying renderElement.
-type greenBoxElement struct{ BaseElement }
+type greenBoxElement struct{}
 
 func (g *greenBoxElement) ElementType() string { return "GreenBox" }
 
@@ -108,7 +108,6 @@ func buildFullReport() *Report {
 	section := &Section{Title: "All Elements"}
 
 	section.AddElement(&NumberTile{
-		BaseElement:  newBaseElement(),
 		Title:        "Revenue",
 		Value:        99999.99,
 		Format:       "%.2f",
@@ -116,14 +115,12 @@ func buildFullReport() *Report {
 		ThousandsSep: true,
 	})
 	section.AddElement(&DateTile{
-		BaseElement: newBaseElement(),
-		Title:       "As Of",
-		Value:       time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC),
+		Title: "As Of",
+		Value: time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC),
 	})
 	section.AddElement(&FreeText{
-		BaseElement: newBaseElement(),
-		Content:     "Hello world",
-		IsHTML:      false,
+		Content: "Hello world",
+		IsHTML:  false,
 	})
 	section.AddElement(NewTable("Data", []map[string]any{
 		{"col1": "a", "col2": "b"},
@@ -137,9 +134,8 @@ func buildFullReport() *Report {
 
 	canvas := NewCanvas(1, 1)
 	canvas.AddElement(&NumberTile{
-		BaseElement: newBaseElement(),
-		Title:       "Inside Canvas",
-		Value:       42,
+		Title: "Inside Canvas",
+		Value: 42,
 	})
 	section.AddElement(canvas)
 
@@ -222,9 +218,8 @@ func TestHtmlEscapingFreeTextNotHTML(t *testing.T) {
 	r := NewReport("Escape Test")
 	section := &Section{}
 	section.AddElement(&FreeText{
-		BaseElement: newBaseElement(),
-		Content:     "<script>alert(1)</script>",
-		IsHTML:      false,
+		Content: "<script>alert(1)</script>",
+		IsHTML:  false,
 	})
 	r.AddSection(section)
 
@@ -241,9 +236,8 @@ func TestHtmlEscapingFreeTextIsHTML(t *testing.T) {
 	r := NewReport("HTML Test")
 	section := &Section{}
 	section.AddElement(&FreeText{
-		BaseElement: newBaseElement(),
-		Content:     "<b>bold</b>",
-		IsHTML:      true,
+		Content: "<b>bold</b>",
+		IsHTML:  true,
 	})
 	r.AddSection(section)
 
@@ -391,7 +385,7 @@ func TestLineChartSinglePreservesInsertionOrder(t *testing.T) {
 
 func TestBarChartScriptHorizontal(t *testing.T) {
 	chart := &BarChart{
-		ChartBase:    ChartBase{BaseElement: newBaseElement(), Title: "H"},
+		ChartBase:    ChartBase{Title: "H"},
 		Data:         []DataPoint{{Label: "A", Value: 1}},
 		IsHorizontal: true,
 	}
@@ -419,7 +413,7 @@ func TestPieChartScriptTypeToggle(t *testing.T) {
 	}
 
 	donut := &PieChart{
-		ChartBase: ChartBase{BaseElement: newBaseElement(), Title: "D"},
+		ChartBase: ChartBase{Title: "D"},
 		Data:      []DataPoint{{Label: "A", Value: 40}, {Label: "B", Value: 60}},
 		IsDonut:   true,
 	}
@@ -544,7 +538,7 @@ func TestStackedBarChartScriptAxesAndOrder(t *testing.T) {
 
 func TestStackedBarChartScriptHorizontal(t *testing.T) {
 	s := &StackedBarChart{
-		ChartBase:    ChartBase{BaseElement: newBaseElement(), Title: "H"},
+		ChartBase:    ChartBase{Title: "H"},
 		Series:       []StackedBarSeries{{Category: "C1", Values: map[string]float64{"S1": 1}}},
 		IsHorizontal: true,
 	}
@@ -714,10 +708,9 @@ func TestNumberTileWithSubtitle(t *testing.T) {
 	r := NewReport("N")
 	section := &Section{}
 	section.AddElement(&NumberTile{
-		BaseElement: newBaseElement(),
-		Title:       "Metric",
-		Value:       42,
-		Subtitle:    "vs last quarter",
+		Title:    "Metric",
+		Value:    42,
+		Subtitle: "vs last quarter",
 	})
 	r.AddSection(section)
 
@@ -731,10 +724,9 @@ func TestDateTileWithSubtitle(t *testing.T) {
 	r := NewReport("D")
 	section := &Section{}
 	section.AddElement(&DateTile{
-		BaseElement: newBaseElement(),
-		Title:       "Date",
-		Value:       time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-		Subtitle:    "fiscal year end",
+		Title:    "Date",
+		Value:    time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+		Subtitle: "fiscal year end",
 	})
 	r.AddSection(section)
 
@@ -773,7 +765,7 @@ func TestEnableAnimationsOffOmitsFadeIn(t *testing.T) {
 func TestRenderElementUnknownType(t *testing.T) {
 	r := NewReport("U")
 	section := &Section{}
-	section.AddElement(&customTestElement{BaseElement: newBaseElement()})
+	section.AddElement(&customTestElement{})
 	r.AddSection(section)
 
 	var buf bytes.Buffer
@@ -823,7 +815,7 @@ func TestTableNonStringAnyCell(t *testing.T) {
 func TestCustomHTMLRendererElement(t *testing.T) {
 	r := NewReport("Custom")
 	section := &Section{}
-	section.AddElement(&greenBoxElement{BaseElement: newBaseElement()})
+	section.AddElement(&greenBoxElement{})
 	r.AddSection(section)
 
 	out := renderHTML(t, r, nil)
@@ -964,7 +956,7 @@ func TestRenderStringMatchesWriter(t *testing.T) {
 func TestRenderErrorPropagated(t *testing.T) {
 	r := NewReport("Err")
 	section := &Section{}
-	section.AddElement(&customTestElement{BaseElement: newBaseElement()})
+	section.AddElement(&customTestElement{})
 	r.AddSection(section)
 	var buf bytes.Buffer
 	err := HtmlRenderer{}.Render(&buf, r, nil)

@@ -10,7 +10,6 @@ import (
 
 // NumberTile displays a single numeric metric.
 type NumberTile struct {
-	BaseElement
 	Title        string
 	Value        float64
 	Format       string // fmt.Sprintf format, e.g. "%.2f", "%.0f", "%.1f%%". Empty = raw float.
@@ -66,7 +65,6 @@ func addThousandsSep(s string) string {
 
 // DateTile displays a date or datetime metric.
 type DateTile struct {
-	BaseElement
 	Title    string
 	Value    time.Time // zero value = not set
 	Format   string    // Go time layout string, e.g. "2006-01-02". Empty = "2006-01-02 15:04:05"
@@ -89,7 +87,6 @@ func (d *DateTile) FormatValue() string {
 
 // FreeText displays a block of text or raw HTML.
 type FreeText struct {
-	BaseElement
 	Content string
 	// SECURITY: when IsHTML is true, Content is injected verbatim into the document without
 	// any escaping. The caller is responsible for ensuring the value is safe HTML — i.e. it
@@ -101,7 +98,6 @@ func (f *FreeText) ElementType() string { return "FreeText" }
 
 // Table displays tabular data.
 type Table struct {
-	BaseElement
 	Title   string
 	Columns []string         // ordered column names
 	Rows    []map[string]any // each row maps column name to value
@@ -119,20 +115,18 @@ func NewTable(title string, rows []map[string]any) *Table {
 		sort.Strings(cols)
 	}
 	return &Table{
-		BaseElement: newBaseElement(),
-		Title:       title,
-		Columns:     cols,
-		Rows:        rows,
+		Title:   title,
+		Columns: cols,
+		Rows:    rows,
 	}
 }
 
 // NewTableWithColumns uses the provided column order explicitly.
 func NewTableWithColumns(title string, rows []map[string]any, columns []string) *Table {
 	return &Table{
-		BaseElement: newBaseElement(),
-		Title:       title,
-		Columns:     columns,
-		Rows:        rows,
+		Title:   title,
+		Columns: columns,
+		Rows:    rows,
 	}
 }
 
@@ -163,16 +157,14 @@ func NewTableFromColumns(title string, columns map[string][]any) (*Table, error)
 	}
 
 	return &Table{
-		BaseElement: newBaseElement(),
-		Title:       title,
-		Columns:     colNames,
-		Rows:        rows,
+		Title:   title,
+		Columns: colNames,
+		Rows:    rows,
 	}, nil
 }
 
 // Canvas is a flexible sub-grid container that holds other elements.
 type Canvas struct {
-	BaseElement
 	ColumnWidths []int
 	Elements     []Element
 }
@@ -188,7 +180,6 @@ func (c *Canvas) AddElement(e Element) *Canvas {
 // NewCanvas returns a Canvas with the given proportional column widths.
 func NewCanvas(columnWidths ...int) *Canvas {
 	return &Canvas{
-		BaseElement:  newBaseElement(),
 		ColumnWidths: columnWidths,
 	}
 }
