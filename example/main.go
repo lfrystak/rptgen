@@ -198,9 +198,11 @@ func write(path string, report *rptgen.Report, theme *rptgen.Theme) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer f.Close()
 	err = rptgen.HtmlRenderer{}.Render(f, report, theme)
 	if err != nil {
+		log.Fatal(err)
+	}
+	if err = f.Close(); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("wrote %s", path)
