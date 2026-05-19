@@ -4,11 +4,12 @@ import "sort"
 
 func renderBarChartScript(id string, e *BarChart, theme *Theme) string {
 	colors := chartColors(theme)
-	labels := sortedKeys(e.Data)
-	data := make([]float64, len(labels))
-	bgColors := make([]string, len(labels))
-	for i, lbl := range labels {
-		data[i] = e.Data[lbl]
+	labels := make([]string, len(e.Data))
+	data := make([]float64, len(e.Data))
+	bgColors := make([]string, len(e.Data))
+	for i, dp := range e.Data {
+		labels[i] = dp.Label
+		data[i] = dp.Value
 		bgColors[i] = colors[i%len(colors)]
 	}
 
@@ -41,10 +42,10 @@ func renderLineChartScript(id string, e *LineChart, theme *Theme) string {
 	seen := map[string]bool{}
 	var labels []string
 	for _, s := range e.Series {
-		for _, lbl := range sortedKeys(s.Points) {
-			if !seen[lbl] {
-				seen[lbl] = true
-				labels = append(labels, lbl)
+		for _, dp := range s.Points {
+			if !seen[dp.Label] {
+				seen[dp.Label] = true
+				labels = append(labels, dp.Label)
 			}
 		}
 	}
@@ -53,9 +54,13 @@ func renderLineChartScript(id string, e *LineChart, theme *Theme) string {
 	tension := 0.4
 	datasets := make([]chartDataset, len(e.Series))
 	for i, s := range e.Series {
+		lookup := make(map[string]float64, len(s.Points))
+		for _, dp := range s.Points {
+			lookup[dp.Label] = dp.Value
+		}
 		data := make([]float64, len(labels))
 		for j, lbl := range labels {
-			data[j] = s.Points[lbl]
+			data[j] = lookup[lbl]
 		}
 		color := colors[i%len(colors)]
 		ds := chartDataset{
@@ -88,11 +93,12 @@ func renderLineChartScript(id string, e *LineChart, theme *Theme) string {
 
 func renderPieChartScript(id string, e *PieChart, theme *Theme) string {
 	colors := chartColors(theme)
-	labels := sortedKeys(e.Data)
-	data := make([]float64, len(labels))
-	bgColors := make([]string, len(labels))
-	for i, lbl := range labels {
-		data[i] = e.Data[lbl]
+	labels := make([]string, len(e.Data))
+	data := make([]float64, len(e.Data))
+	bgColors := make([]string, len(e.Data))
+	for i, dp := range e.Data {
+		labels[i] = dp.Label
+		data[i] = dp.Value
 		bgColors[i] = colors[i%len(colors)]
 	}
 

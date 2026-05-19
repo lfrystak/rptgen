@@ -103,9 +103,9 @@ func buildFullReport() *Report {
 	section.AddElement(NewTable("Data", []map[string]any{
 		{"col1": "a", "col2": "b"},
 	}))
-	section.AddElement(NewBarChart("Bar", map[string]float64{"X": 1, "Y": 2}))
-	section.AddElement(NewLineChartSingle("Line", map[string]float64{"Jan": 10, "Feb": 20}))
-	section.AddElement(NewPieChart("Pie", map[string]float64{"A": 30, "B": 70}))
+	section.AddElement(NewBarChart("Bar", []DataPoint{{Label: "X", Value: 1}, {Label: "Y", Value: 2}}))
+	section.AddElement(NewLineChartSingle("Line", []DataPoint{{Label: "Jan", Value: 10}, {Label: "Feb", Value: 20}}))
+	section.AddElement(NewPieChart("Pie", []DataPoint{{Label: "A", Value: 30}, {Label: "B", Value: 70}}))
 	section.AddElement(NewStackedBarChart("Stacked", []StackedBarSeries{
 		{Category: "Q1", Values: map[string]float64{"S1": 10, "S2": 20}},
 	}))
@@ -283,15 +283,18 @@ func TestGoldenCustomTheme(t *testing.T) {
 // --- bar chart JSON ---
 
 func TestBarChartScriptLabelsAndData(t *testing.T) {
-	chart := NewBarChart("Sales", map[string]float64{
-		"Bananas": 30, "Apples": 50, "Cherries": 20,
+	// Input order: Bananas, Apples, Cherries — must render in that order, not alphabetically.
+	chart := NewBarChart("Sales", []DataPoint{
+		{Label: "Bananas", Value: 30},
+		{Label: "Apples", Value: 50},
+		{Label: "Cherries", Value: 20},
 	})
 	cfg := parseChartScript(t, renderBarChartScript("id", chart, DefaultTheme()))
 
 	if cfg.Type != "bar" {
 		t.Errorf("Type: got %q, want bar", cfg.Type)
 	}
-	wantLabels := []string{"Apples", "Bananas", "Cherries"}
+	wantLabels := []string{"Bananas", "Apples", "Cherries"}
 	if len(cfg.Data.Labels) != len(wantLabels) {
 		t.Fatalf("Labels: got %v, want %v", cfg.Data.Labels, wantLabels)
 	}
@@ -303,8 +306,8 @@ func TestBarChartScriptLabelsAndData(t *testing.T) {
 	if len(cfg.Data.Datasets) != 1 {
 		t.Fatalf("Datasets: got %d, want 1", len(cfg.Data.Datasets))
 	}
-	// data values must follow sorted label order: Apples=50, Bananas=30, Cherries=20
-	wantData := []float64{50, 30, 20}
+	// data values follow insertion order: Bananas=30, Apples=50, Cherries=20
+	wantData := []float64{30, 50, 20}
 	for i, v := range wantData {
 		if cfg.Data.Datasets[0].Data[i] != v {
 			t.Errorf("Data[%d]: got %v, want %v", i, cfg.Data.Datasets[0].Data[i], v)
@@ -318,10 +321,64 @@ func TestBarChartScriptLabelsAndData(t *testing.T) {
 	}
 }
 
+func TestBarChartPreservesInsertionOrder(t *testing.T) {
+	chart := NewBarChart("Months", []DataPoint{
+		{Label: "Mar", Value: 3},
+		{Label: "Jan", Value: 1},
+		{Label: "Feb", Value: 2},
+	})
+	cfg := parseChartScript(t, renderBarChartScript("id", chart, DefaultTheme()))
+	want := []string{"Mar", "Jan", "Feb"}
+	if len(cfg.Data.Labels) != len(want) {
+		t.Fatalf("Labels: got %v, want %v", cfg.Data.Labels, want)
+	}
+	for i, lbl := range want {
+		if cfg.Data.Labels[i] != lbl {
+			t.Errorf("Labels[%d]: got %q, want %q (insertion order must be preserved)", i, cfg.Data.Labels[i], lbl)
+		}
+	}
+}
+
+func TestPieChartPreservesInsertionOrder(t *testing.T) {
+	chart := NewPieChart("Quarters", []DataPoint{
+		{Label: "Q3", Value: 30},
+		{Label: "Q1", Value: 10},
+		{Label: "Q2", Value: 20},
+	})
+	cfg := parseChartScript(t, renderPieChartScript("id", chart, DefaultTheme()))
+	want := []string{"Q3", "Q1", "Q2"}
+	if len(cfg.Data.Labels) != len(want) {
+		t.Fatalf("Labels: got %v, want %v", cfg.Data.Labels, want)
+	}
+	for i, lbl := range want {
+		if cfg.Data.Labels[i] != lbl {
+			t.Errorf("Labels[%d]: got %q, want %q (insertion order must be preserved)", i, cfg.Data.Labels[i], lbl)
+		}
+	}
+}
+
+func TestLineChartSinglePreservesInsertionOrder(t *testing.T) {
+	lc := NewLineChartSingle("Revenue", []DataPoint{
+		{Label: "June", Value: 58000},
+		{Label: "April", Value: 55000},
+		{Label: "May", Value: 61000},
+	})
+	cfg := parseChartScript(t, renderLineChartScript("id", lc, DefaultTheme()))
+	want := []string{"June", "April", "May"}
+	if len(cfg.Data.Labels) != len(want) {
+		t.Fatalf("Labels: got %v, want %v", cfg.Data.Labels, want)
+	}
+	for i, lbl := range want {
+		if cfg.Data.Labels[i] != lbl {
+			t.Errorf("Labels[%d]: got %q, want %q (insertion order must be preserved)", i, cfg.Data.Labels[i], lbl)
+		}
+	}
+}
+
 func TestBarChartScriptHorizontal(t *testing.T) {
 	chart := &BarChart{
 		ChartBase:    ChartBase{BaseElement: newBaseElement(), Title: "H"},
-		Data:         map[string]float64{"A": 1},
+		Data:         []DataPoint{{Label: "A", Value: 1}},
 		IsHorizontal: true,
 	}
 	cfg := parseChartScript(t, renderBarChartScript("id", chart, DefaultTheme()))
@@ -333,7 +390,7 @@ func TestBarChartScriptHorizontal(t *testing.T) {
 // --- pie/donut chart JSON ---
 
 func TestPieChartScriptTypeToggle(t *testing.T) {
-	pie := NewPieChart("P", map[string]float64{"A": 40, "B": 60})
+	pie := NewPieChart("P", []DataPoint{{Label: "A", Value: 40}, {Label: "B", Value: 60}})
 	cfgPie := parseChartScript(t, renderPieChartScript("id", pie, DefaultTheme()))
 	if cfgPie.Type != "pie" {
 		t.Errorf("pie Type: got %q, want pie", cfgPie.Type)
@@ -341,7 +398,7 @@ func TestPieChartScriptTypeToggle(t *testing.T) {
 
 	donut := &PieChart{
 		ChartBase: ChartBase{BaseElement: newBaseElement(), Title: "D"},
-		Data:      map[string]float64{"A": 40, "B": 60},
+		Data:      []DataPoint{{Label: "A", Value: 40}, {Label: "B", Value: 60}},
 		IsDonut:   true,
 	}
 	cfgDonut := parseChartScript(t, renderPieChartScript("id", donut, DefaultTheme()))
@@ -354,8 +411,8 @@ func TestPieChartScriptTypeToggle(t *testing.T) {
 
 func TestLineChartScriptMultiSeriesLabels(t *testing.T) {
 	lc := NewLineChart("Trend", []LineSeries{
-		{Name: "Alpha", Points: map[string]float64{"Q1": 10, "Q2": 20}},
-		{Name: "Beta", Points: map[string]float64{"Q2": 5, "Q3": 15}},
+		{Name: "Alpha", Points: []DataPoint{{Label: "Q1", Value: 10}, {Label: "Q2", Value: 20}}},
+		{Name: "Beta", Points: []DataPoint{{Label: "Q2", Value: 5}, {Label: "Q3", Value: 15}}},
 	})
 	cfg := parseChartScript(t, renderLineChartScript("id", lc, DefaultTheme()))
 
@@ -363,7 +420,7 @@ func TestLineChartScriptMultiSeriesLabels(t *testing.T) {
 	if cfg.Options.Plugins == nil || cfg.Options.Plugins.Legend == nil || !cfg.Options.Plugins.Legend.Display {
 		t.Error("Legend.Display must be true for multi-series line chart")
 	}
-	// labels: Q1, Q2 from Alpha (sorted), then Q3 from Beta (new)
+	// labels: Q1, Q2 from Alpha (insertion order), then Q3 from Beta (first new label)
 	wantLabels := []string{"Q1", "Q2", "Q3"}
 	if len(cfg.Data.Labels) != len(wantLabels) {
 		t.Fatalf("Labels: got %v, want %v", cfg.Data.Labels, wantLabels)
@@ -383,7 +440,7 @@ func TestLineChartScriptMultiSeriesLabels(t *testing.T) {
 }
 
 func TestLineChartScriptShowPointsFalse(t *testing.T) {
-	lc := NewLineChartSingle("S", map[string]float64{"Jan": 1})
+	lc := NewLineChartSingle("S", []DataPoint{{Label: "Jan", Value: 1}})
 	lc.ShowPoints = false
 	cfg := parseChartScript(t, renderLineChartScript("id", lc, DefaultTheme()))
 
@@ -574,8 +631,8 @@ func TestChartColorsThemeOverride(t *testing.T) {
 func TestChartLabelInjectionEscaped(t *testing.T) {
 	r := NewReport("Sec Test")
 	section := &Section{Title: "S"}
-	section.AddElement(NewBarChart("</script>alert(1)//", map[string]float64{
-		"</script>alert(1)": 99,
+	section.AddElement(NewBarChart("</script>alert(1)//", []DataPoint{
+		{Label: "</script>alert(1)", Value: 99},
 	}))
 	r.AddSection(section)
 
