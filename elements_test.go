@@ -6,6 +6,58 @@ import (
 	"time"
 )
 
+// --- NewNumberTile ---
+
+func TestNewNumberTile(t *testing.T) {
+	tile := NewNumberTile("Revenue", 99.5)
+	if tile.Title != "Revenue" {
+		t.Errorf("Title: got %q, want %q", tile.Title, "Revenue")
+	}
+	if tile.Value != 99.5 {
+		t.Errorf("Value: got %v, want 99.5", tile.Value)
+	}
+	if tile.Format != "" || tile.Prefix != "" || tile.ThousandsSep || tile.Subtitle != "" || tile.Tooltip != "" {
+		t.Error("optional fields should be zero values")
+	}
+	if tile.ElementType() != "NumberTile" {
+		t.Errorf("ElementType: got %q", tile.ElementType())
+	}
+}
+
+// --- NewDateTile ---
+
+func TestNewDateTile(t *testing.T) {
+	ts := time.Date(2024, 6, 30, 0, 0, 0, 0, time.UTC)
+	tile := NewDateTile("Quarter End", ts)
+	if tile.Title != "Quarter End" {
+		t.Errorf("Title: got %q, want %q", tile.Title, "Quarter End")
+	}
+	if !tile.Value.Equal(ts) {
+		t.Errorf("Value: got %v, want %v", tile.Value, ts)
+	}
+	if tile.Format != "" || tile.Subtitle != "" || tile.Tooltip != "" {
+		t.Error("optional fields should be zero values")
+	}
+	if tile.ElementType() != "DateTile" {
+		t.Errorf("ElementType: got %q", tile.ElementType())
+	}
+}
+
+// --- NewFreeText ---
+
+func TestNewFreeText(t *testing.T) {
+	ft := NewFreeText("hello world")
+	if ft.Content != "hello world" {
+		t.Errorf("Content: got %q, want %q", ft.Content, "hello world")
+	}
+	if ft.IsHTML {
+		t.Error("IsHTML should default to false")
+	}
+	if ft.ElementType() != "FreeText" {
+		t.Errorf("ElementType: got %q", ft.ElementType())
+	}
+}
+
 // --- NumberTile.FormatValue ---
 
 func TestNumberTileFormatValue(t *testing.T) {

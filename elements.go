@@ -21,6 +21,15 @@ type NumberTile struct {
 
 func (n *NumberTile) ElementType() string { return "NumberTile" }
 
+// NewNumberTile returns a NumberTile with the given title and value.
+// Optional display fields (Format, Prefix, ThousandsSep, Subtitle, Tooltip) can be set on the returned pointer.
+func NewNumberTile(title string, value float64) *NumberTile {
+	return &NumberTile{
+		Title: title,
+		Value: value,
+	}
+}
+
 func (n *NumberTile) FormatValue() string {
 	var s string
 	if n.Format == "" {
@@ -74,6 +83,15 @@ type DateTile struct {
 
 func (d *DateTile) ElementType() string { return "DateTile" }
 
+// NewDateTile returns a DateTile with the given title and time value.
+// Optional display fields (Format, Subtitle, Tooltip) can be set on the returned pointer.
+func NewDateTile(title string, value time.Time) *DateTile {
+	return &DateTile{
+		Title: title,
+		Value: value,
+	}
+}
+
 func (d *DateTile) FormatValue() string {
 	if d.Value.IsZero() {
 		return ""
@@ -95,6 +113,12 @@ type FreeText struct {
 }
 
 func (f *FreeText) ElementType() string { return "FreeText" }
+
+// NewFreeText returns a FreeText element with the given plain-text content.
+// Set IsHTML = true on the returned pointer to inject Content as raw HTML (caller must ensure it is safe).
+func NewFreeText(content string) *FreeText {
+	return &FreeText{Content: content}
+}
 
 // Table displays tabular data.
 type Table struct {
@@ -163,7 +187,9 @@ func NewTableFromColumns(title string, columns map[string][]any) (*Table, error)
 	}, nil
 }
 
-// Canvas is a flexible sub-grid container that holds other elements.
+// Canvas is a nestable sub-grid element that can be placed inside a Section column.
+// It uses the same proportional ColumnWidths semantics as Section, but unlike Section
+// it is itself an Element and can be nested at any depth.
 type Canvas struct {
 	ColumnWidths []int
 	Elements     []Element

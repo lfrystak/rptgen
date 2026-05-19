@@ -35,9 +35,17 @@ func main() {
     report := rptgen.NewReport("Monthly Summary")
     report.Footer = "Internal use only"
 
-    section := &rptgen.Section{Title: "KPIs", ColumnWidths: []int{1, 1}}
-    section.AddElement(&rptgen.NumberTile{Title: "Revenue", Value: 98000, Format: "%.0f", Prefix: "$", ThousandsSep: true})
-    section.AddElement(&rptgen.NumberTile{Title: "Growth", Value: 12.0, Format: "%.1f%%"})
+    section := rptgen.NewSection("KPIs", 1, 1)
+
+    rev := rptgen.NewNumberTile("Revenue", 98000)
+    rev.Format = "%.0f"
+    rev.Prefix = "$"
+    rev.ThousandsSep = true
+    section.AddElement(rev)
+
+    growth := rptgen.NewNumberTile("Growth", 12.0)
+    growth.Format = "%.1f%%"
+    section.AddElement(growth)
     report.AddSection(section)
 
     f, err := os.Create("report.html")
@@ -73,7 +81,8 @@ report.Footer  = "Confidential"
 
 ### `Section`
 
-A section groups elements into a CSS grid row.
+A section groups elements into a CSS grid row within a `Report`.
+`Section` is a layout row; it is not itself an `Element`. Use [`Canvas`](#canvas) when you need a nestable sub-grid element placed inside a section column.
 
 | Field          | Type       | Description                                                                 |
 |----------------|------------|-----------------------------------------------------------------------------|
@@ -81,12 +90,18 @@ A section groups elements into a CSS grid row.
 | `Elements`     | `[]Element` | Ordered list of elements in the section.                                   |
 | `ColumnWidths` | `[]int`    | Proportional column widths. `[]int{1, 2}` = 33 %/67 %. Nil = one column. |
 
-Use `EqualColumns(n)` to create n equal-width columns without spelling out the slice:
-
 ```go
-// Two equal columns — both are equivalent
-section := &rptgen.Section{Title: "Revenue", ColumnWidths: rptgen.EqualColumns(2)}
-section := &rptgen.Section{Title: "Revenue", ColumnWidths: []int{1, 1}}
+// Single column (no widths)
+section := rptgen.NewSection("Summary")
+
+// Two equal columns
+section := rptgen.NewSection("Revenue", 1, 1)
+
+// Four equal columns via EqualColumns helper
+section := rptgen.NewSection("KPIs", rptgen.EqualColumns(4)...)
+
+// Custom ratio: 33%/67%
+section := rptgen.NewSection("Charts", 1, 2)
 
 section.AddElement(chart1)
 section.AddElement(chart2)
@@ -110,9 +125,18 @@ Displays a single numeric metric.
 | `Tooltip`      | `string`  | Hover text on the tile card.                                             |
 
 ```go
-&rptgen.NumberTile{Title: "Revenue", Value: 98000, Format: "%.0f", Prefix: "$", ThousandsSep: true}
-&rptgen.NumberTile{Title: "Growth",  Value: 12.0,  Format: "%.1f%%", Subtitle: "↑ vs Q1"}
-&rptgen.NumberTile{Title: "Score",   Value: 4.7,   Format: "%.1f",   Tooltip: "Out of 5"}
+rev := rptgen.NewNumberTile("Revenue", 98000)
+rev.Format = "%.0f"
+rev.Prefix = "$"
+rev.ThousandsSep = true
+
+growth := rptgen.NewNumberTile("Growth", 12.0)
+growth.Format = "%.1f%%"
+growth.Subtitle = "↑ vs Q1"
+
+score := rptgen.NewNumberTile("Score", 4.7)
+score.Format = "%.1f"
+score.Tooltip = "Out of 5"
 ```
 
 #### `DateTile`
@@ -128,11 +152,8 @@ Displays a date or datetime metric.
 | `Tooltip`  | `string`    | Hover text on the tile card.                                         |
 
 ```go
-&rptgen.DateTile{
-    Title:  "Quarter End",
-    Value:  time.Date(2024, 6, 30, 0, 0, 0, 0, time.UTC),
-    Format: "January 02, 2006",
-}
+tile := rptgen.NewDateTile("Quarter End", time.Date(2024, 6, 30, 0, 0, 0, 0, time.UTC))
+tile.Format = "January 02, 2006"
 ```
 
 #### `FreeText`
@@ -150,8 +171,10 @@ Displays a block of plain text or raw HTML.
 > passing it to `FreeText`. Failing to do so allows stored XSS.
 
 ```go
-&rptgen.FreeText{Content: "Plain paragraph text."}
-&rptgen.FreeText{Content: "<p>Rich <strong>HTML</strong> content.</p>", IsHTML: true}
+rptgen.NewFreeText("Plain paragraph text.")
+
+html := rptgen.NewFreeText("<p>Rich <strong>HTML</strong> content.</p>")
+html.IsHTML = true
 ```
 
 #### `Table`
@@ -182,7 +205,8 @@ rptgen.NewTableFromColumns("Sales", map[string][]any{
 
 #### `Canvas`
 
-A flexible sub-grid container that nests elements inside a section column.
+A nestable sub-grid element placed inside a `Section` column.
+Unlike `Section` (a top-level layout row), `Canvas` is itself an `Element` and can be nested at any depth.
 
 | Field          | Type       | Description                                                              |
 |----------------|------------|--------------------------------------------------------------------------|

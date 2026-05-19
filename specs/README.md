@@ -13,7 +13,7 @@ column as work progresses: `🔜 Not started` · `🔄 In progress` · `✅ Done
 | [005](005-extensibility-element-interface.md) | `Element` interface is illusory: rendering is a hardcoded type switch | Important | ✅ Done |
 | [006](006-render-to-io-writer.md) | `Render` returns buffered `string` instead of writing to `io.Writer` | Important | ✅ Done |
 | [007](007-baseelement-dead-boilerplate.md) | `BaseElement` / `newBaseElement()` is dead boilerplate | Important | ✅ Done |
-| [008](008-api-consistency.md) | Inconsistent public API: constructors vs raw struct literals | Important | 🔜 Not started |
+| [008](008-api-consistency.md) | Inconsistent public API: constructors vs raw struct literals | Important | ✅ Done |
 | [009](009-ci-workflow-defects.md) | CI: placeholder step, non-enforcing lint, missing quality gates | Important | ✅ Done |
 | [010](010-goreleaser-library-misconfig.md) | GoReleaser builds binaries for a library | Important | ✅ Done |
 | [011](011-gomod-pins-patch-version.md) | `go.mod` pins a patch toolchain version (`go 1.26.3`) | Important | ✅ Done |

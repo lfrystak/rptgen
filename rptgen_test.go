@@ -28,6 +28,43 @@ func TestNewReport(t *testing.T) {
 	}
 }
 
+func TestNewSection(t *testing.T) {
+	t.Run("no column widths", func(t *testing.T) {
+		s := NewSection("Stats")
+		if s.Title != "Stats" {
+			t.Errorf("Title: got %q, want %q", s.Title, "Stats")
+		}
+		if len(s.ColumnWidths) != 0 {
+			t.Errorf("ColumnWidths: got %v, want empty", s.ColumnWidths)
+		}
+		if len(s.Elements) != 0 {
+			t.Errorf("Elements: got len %d, want 0", len(s.Elements))
+		}
+	})
+
+	t.Run("with column widths", func(t *testing.T) {
+		s := NewSection("Revenue", 1, 2)
+		if s.Title != "Revenue" {
+			t.Errorf("Title: got %q", s.Title)
+		}
+		if len(s.ColumnWidths) != 2 || s.ColumnWidths[0] != 1 || s.ColumnWidths[1] != 2 {
+			t.Errorf("ColumnWidths: got %v, want [1 2]", s.ColumnWidths)
+		}
+	})
+
+	t.Run("single column via EqualColumns", func(t *testing.T) {
+		s := NewSection("Kpis", EqualColumns(3)...)
+		if len(s.ColumnWidths) != 3 {
+			t.Errorf("ColumnWidths len: got %d, want 3", len(s.ColumnWidths))
+		}
+		for i, w := range s.ColumnWidths {
+			if w != 1 {
+				t.Errorf("ColumnWidths[%d]: got %d, want 1", i, w)
+			}
+		}
+	})
+}
+
 func TestAddSection(t *testing.T) {
 	r := NewReport("R")
 	s1 := &Section{Title: "S1"}
