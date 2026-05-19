@@ -1,5 +1,31 @@
 package rptgen
 
+import "sort"
+
+// DataPoint is an ordered label-value pair used in single-series chart data.
+// Use a []DataPoint literal to preserve the insertion order that will appear on
+// the chart axis. If alphabetical order is acceptable, use DataPointsFromMap.
+type DataPoint struct {
+	Label string
+	Value float64
+}
+
+// DataPointsFromMap converts a map to a []DataPoint sorted alphabetically by
+// label. Use this only when alphabetical order is acceptable; prefer a
+// []DataPoint literal when the display order matters (e.g. months, quarters).
+func DataPointsFromMap(m map[string]float64) []DataPoint {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	pts := make([]DataPoint, len(keys))
+	for i, k := range keys {
+		pts[i] = DataPoint{Label: k, Value: m[k]}
+	}
+	return pts
+}
+
 // ChartBase is embedded by all chart types and holds common chart fields.
 type ChartBase struct {
 	BaseElement
@@ -8,15 +34,16 @@ type ChartBase struct {
 }
 
 // BarChart displays a single-series bar chart.
+// Data is a slice to preserve the caller's insertion order on the chart axis.
 type BarChart struct {
 	ChartBase
-	Data         map[string]float64 // label → value
+	Data         []DataPoint
 	IsHorizontal bool
 }
 
 func (b *BarChart) ElementType() string { return "BarChart" }
 
-func NewBarChart(title string, data map[string]float64) *BarChart {
+func NewBarChart(title string, data []DataPoint) *BarChart {
 	return &BarChart{
 		ChartBase: ChartBase{BaseElement: newBaseElement(), Title: title},
 		Data:      data,
@@ -24,9 +51,10 @@ func NewBarChart(title string, data map[string]float64) *BarChart {
 }
 
 // LineSeries holds a named data series for a LineChart.
+// Points is a slice to preserve the caller's insertion order on the chart axis.
 type LineSeries struct {
 	Name   string
-	Points map[string]float64 // label → value
+	Points []DataPoint
 }
 
 // LineChart displays a line chart with one or more series.
@@ -49,7 +77,7 @@ func NewLineChart(title string, series []LineSeries) *LineChart {
 }
 
 // NewLineChartSingle wraps a single data series, using the chart title as the series name.
-func NewLineChartSingle(title string, points map[string]float64) *LineChart {
+func NewLineChartSingle(title string, points []DataPoint) *LineChart {
 	return &LineChart{
 		ChartBase:  ChartBase{BaseElement: newBaseElement(), Title: title},
 		Series:     []LineSeries{{Name: title, Points: points}},
@@ -58,15 +86,16 @@ func NewLineChartSingle(title string, points map[string]float64) *LineChart {
 }
 
 // PieChart displays a pie or donut chart.
+// Data is a slice to preserve the caller's insertion order on the chart legend.
 type PieChart struct {
 	ChartBase
-	Data    map[string]float64 // label → value
+	Data    []DataPoint
 	IsDonut bool
 }
 
 func (p *PieChart) ElementType() string { return "PieChart" }
 
-func NewPieChart(title string, data map[string]float64) *PieChart {
+func NewPieChart(title string, data []DataPoint) *PieChart {
 	return &PieChart{
 		ChartBase: ChartBase{BaseElement: newBaseElement(), Title: title},
 		Data:      data,

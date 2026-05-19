@@ -204,20 +204,26 @@ Charts are rendered using Chart.js, embedded inline — no CDN calls required.
 
 Single-series vertical or horizontal bar chart.
 
-| Field          | Type                  | Description                              |
-|----------------|-----------------------|------------------------------------------|
-| `Title`        | `string`              | Chart heading.                           |
-| `Data`         | `map[string]float64`  | Label → value pairs.                     |
-| `IsHorizontal` | `bool`                | Render bars horizontally if `true`.      |
-| `Tooltip`      | `string`              | Hover text on the chart card.            |
+| Field          | Type            | Description                                                     |
+|----------------|-----------------|-----------------------------------------------------------------|
+| `Title`        | `string`        | Chart heading.                                                  |
+| `Data`         | `[]DataPoint`   | Ordered label-value pairs. Axis order matches slice order.      |
+| `IsHorizontal` | `bool`          | Render bars horizontally if `true`.                             |
+| `Tooltip`      | `string`        | Hover text on the chart card.                                   |
 
 ```go
-chart := rptgen.NewBarChart("Sales by Region", map[string]float64{
-    "North America": 125000,
-    "Europe":        98000,
+chart := rptgen.NewBarChart("Sales by Region", []rptgen.DataPoint{
+    {Label: "Asia Pacific",  Value: 142000},
+    {Label: "North America", Value: 125000},
+    {Label: "Europe",        Value: 98000},
+    {Label: "Latin America", Value: 67000},
 })
 chart.IsHorizontal = true
 ```
+
+> **Ordering note:** `[]DataPoint` preserves the order you specify.
+> If you have a `map[string]float64` and alphabetical order is acceptable,
+> use `rptgen.DataPointsFromMap(m)` as a convenience converter.
 
 #### `LineChart`
 
@@ -232,21 +238,23 @@ Line chart with one or more named series.
 
 Each `LineSeries` has:
 
-| Field    | Type                 | Description              |
-|----------|----------------------|--------------------------|
-| `Name`   | `string`             | Series label in legend.  |
-| `Points` | `map[string]float64` | Label → value pairs.     |
+| Field    | Type            | Description                                                 |
+|----------|-----------------|-------------------------------------------------------------|
+| `Name`   | `string`        | Series label in legend.                                     |
+| `Points` | `[]DataPoint`   | Ordered label-value pairs. Axis order matches slice order.  |
 
 ```go
 // Single series
-chart := rptgen.NewLineChartSingle("Monthly Revenue", map[string]float64{
-    "Jan": 45000, "Feb": 52000, "Mar": 48000,
+chart := rptgen.NewLineChartSingle("Monthly Revenue", []rptgen.DataPoint{
+    {Label: "January", Value: 45000},
+    {Label: "February", Value: 52000},
+    {Label: "March", Value: 48000},
 })
 
 // Multiple series
 chart := rptgen.NewLineChart("Revenue vs Costs", []rptgen.LineSeries{
-    {Name: "Revenue", Points: map[string]float64{"Q1": 145000, "Q2": 174000}},
-    {Name: "Costs",   Points: map[string]float64{"Q1": 95000,  "Q2": 102000}},
+    {Name: "Revenue", Points: []rptgen.DataPoint{{Label: "Q1", Value: 145000}, {Label: "Q2", Value: 174000}}},
+    {Name: "Costs",   Points: []rptgen.DataPoint{{Label: "Q1", Value: 95000},  {Label: "Q2", Value: 102000}}},
 })
 ```
 
@@ -254,18 +262,18 @@ chart := rptgen.NewLineChart("Revenue vs Costs", []rptgen.LineSeries{
 
 Pie or donut chart.
 
-| Field     | Type                 | Description                              |
-|-----------|----------------------|------------------------------------------|
-| `Title`   | `string`             | Chart heading.                           |
-| `Data`    | `map[string]float64` | Label → value pairs.                     |
-| `IsDonut` | `bool`               | Render as donut (hollow center) if `true`. |
-| `Tooltip` | `string`             | Hover text on the chart card.            |
+| Field     | Type            | Description                                                    |
+|-----------|-----------------|----------------------------------------------------------------|
+| `Title`   | `string`        | Chart heading.                                                 |
+| `Data`    | `[]DataPoint`   | Ordered label-value pairs. Legend order matches slice order.   |
+| `IsDonut` | `bool`          | Render as donut (hollow center) if `true`.                     |
+| `Tooltip` | `string`        | Hover text on the chart card.                                  |
 
 ```go
-chart := rptgen.NewPieChart("Product Mix", map[string]float64{
-    "Enterprise":   45,
-    "Professional": 30,
-    "Starter":      25,
+chart := rptgen.NewPieChart("Product Mix", []rptgen.DataPoint{
+    {Label: "Enterprise",   Value: 45},
+    {Label: "Professional", Value: 30},
+    {Label: "Starter",      Value: 25},
 })
 chart.IsDonut = true
 ```

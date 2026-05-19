@@ -3,7 +3,6 @@ package rptgen
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 )
 
 var defaultChartColors = []string{
@@ -16,16 +15,6 @@ func chartColors(theme *Theme) []string {
 		return theme.ChartColors
 	}
 	return defaultChartColors
-}
-
-// sortedKeys returns map keys in sorted order for deterministic chart rendering.
-func sortedKeys(m map[string]float64) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
 }
 
 // chartInitScript wraps a Chart.js config JSON in an IIFE.

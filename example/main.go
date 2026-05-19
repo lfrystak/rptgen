@@ -14,26 +14,26 @@ const (
 
 func main() {
 	// Sample data — simulating data extracted from an API
-	salesByRegion := map[string]float64{
-		"North America": 125000,
-		"Europe":        98000,
-		"Asia Pacific":  142000,
-		"Latin America": 67000,
+	salesByRegion := []rptgen.DataPoint{
+		{Label: "Asia Pacific", Value: 142000},
+		{Label: "North America", Value: 125000},
+		{Label: "Europe", Value: 98000},
+		{Label: "Latin America", Value: 67000},
 	}
 
-	monthlyRevenue := map[string]float64{
-		"January":  45000,
-		"February": 52000,
-		"March":    48000,
-		"April":    55000,
-		"May":      61000,
-		"June":     58000,
+	monthlyRevenue := []rptgen.DataPoint{
+		{Label: "January", Value: 45000},
+		{Label: "February", Value: 52000},
+		{Label: "March", Value: 48000},
+		{Label: "April", Value: 55000},
+		{Label: "May", Value: 61000},
+		{Label: "June", Value: 58000},
 	}
 
-	productMix := map[string]float64{
-		"Enterprise":   45,
-		"Professional": 30,
-		"Starter":      25,
+	productMix := []rptgen.DataPoint{
+		{Label: "Enterprise", Value: 45},
+		{Label: "Professional", Value: 30},
+		{Label: "Starter", Value: 25},
 	}
 
 	quarterlyGrowth := []rptgen.StackedBarSeries{
@@ -151,7 +151,7 @@ func main() {
 		Format:   "%.0f",
 		Subtitle: "This is in a canvas!",
 	})
-	canvas.AddElement(rptgen.NewBarChart("Sample Chart", map[string]float64{"A": 10, "B": 20, "C": 15}))
+	canvas.AddElement(rptgen.NewBarChart("Sample Chart", []rptgen.DataPoint{{Label: "A", Value: 10}, {Label: "B", Value: 20}, {Label: "C", Value: 15}}))
 	canvas.AddElement(&rptgen.NumberTile{Title: "Another Tile", Value: 42, Format: "%.0f"})
 	canvas.AddElement(&rptgen.DateTile{
 		Title:  "Today",
@@ -160,7 +160,7 @@ func main() {
 	})
 	canvasSection.AddElement(canvas)
 	canvasSection.AddElement(func() rptgen.Element {
-		c := rptgen.NewPieChart("Sample Pie", map[string]float64{"X": 30, "Y": 40, "Z": 30})
+		c := rptgen.NewPieChart("Sample Pie", []rptgen.DataPoint{{Label: "X", Value: 30}, {Label: "Y", Value: 40}, {Label: "Z", Value: 30}})
 		c.IsDonut = true
 		return c
 	}())
