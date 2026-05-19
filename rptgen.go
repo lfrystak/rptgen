@@ -34,13 +34,25 @@ func (r *Report) AddSection(s *Section) *Report {
 	return r
 }
 
-// Section groups elements into a layout row.
-// ColumnWidths holds proportional widths (e.g. [1,2] = 33%/67%).
-// Nil or empty means a single column.
+// Section groups elements into a layout row within a Report.
+// ColumnWidths holds proportional widths (e.g. [1,2] = 33%/67%); nil or empty = single column.
+//
+// Section is a top-level row managed by Report and is not itself an Element.
+// Use Canvas when you need a nestable sub-grid element that sits inside a Section column.
 type Section struct {
 	Title        string
 	Elements     []Element
 	ColumnWidths []int
+}
+
+// NewSection returns a Section with the given title and optional proportional column widths.
+// NewSection("Stats", 1, 2) creates a section with a 33%/67% two-column grid.
+// Omit columnWidths (or pass none) for a single-column layout.
+func NewSection(title string, columnWidths ...int) *Section {
+	return &Section{
+		Title:        title,
+		ColumnWidths: columnWidths,
+	}
 }
 
 // AddElement appends e to the section and returns s for optional chaining.
