@@ -151,65 +151,74 @@ func applyChartOptions(o *chartOptions, opts ChartOptions, title string, isCarte
 	}
 
 	if opts.LegendPosition != "" {
-		if o.Plugins.Legend == nil {
-			o.Plugins.Legend = &chartLegend{Display: true}
-		}
-		if opts.LegendPosition == "none" {
-			o.Plugins.Legend.Display = false
-			o.Plugins.Legend.Position = ""
-		} else {
-			o.Plugins.Legend.Display = true
-			o.Plugins.Legend.Position = opts.LegendPosition
-		}
+		applyLegendOption(o.Plugins, opts.LegendPosition)
 	}
-
 	if opts.ShowChartTitle && title != "" {
 		o.Plugins.Title = &chartTitle{Display: true, Text: title}
 	}
-
 	if opts.ShowTooltips != nil && !*opts.ShowTooltips {
 		o.Plugins.Tooltip = &chartTooltip{Enabled: false}
 	}
 
-	if !isCartesian {
-		return
+	if isCartesian {
+		applyCartesianOptions(o, opts, isHorizontal)
 	}
+}
 
+func applyLegendOption(plugins *chartPlugins, position string) {
+	if plugins.Legend == nil {
+		plugins.Legend = &chartLegend{Display: true}
+	}
+	if position == "none" {
+		plugins.Legend.Display = false
+		plugins.Legend.Position = ""
+	} else {
+		plugins.Legend.Display = true
+		plugins.Legend.Position = position
+	}
+}
+
+func applyCartesianOptions(o *chartOptions, opts ChartOptions, isHorizontal bool) {
 	if opts.XAxisTitle != "" {
-		if o.Scales == nil {
-			o.Scales = &chartScales{}
-		}
-		if o.Scales.X == nil {
-			o.Scales.X = &chartAxis{}
-		}
-		o.Scales.X.Title = &chartAxisTitle{Display: true, Text: opts.XAxisTitle}
+		ensureScaleX(o).Title = &chartAxisTitle{Display: true, Text: opts.XAxisTitle}
 	}
 	if opts.YAxisTitle != "" {
-		if o.Scales == nil {
-			o.Scales = &chartScales{}
-		}
-		if o.Scales.Y == nil {
-			o.Scales.Y = &chartAxis{}
-		}
-		o.Scales.Y.Title = &chartAxisTitle{Display: true, Text: opts.YAxisTitle}
+		ensureScaleY(o).Title = &chartAxisTitle{Display: true, Text: opts.YAxisTitle}
 	}
 	if opts.YMin != nil || opts.YMax != nil {
-		if o.Scales == nil {
-			o.Scales = &chartScales{}
-		}
-		// Apply min/max to the value axis: Y for normal orientation, X for horizontal.
-		if isHorizontal {
-			if o.Scales.X == nil {
-				o.Scales.X = &chartAxis{}
-			}
-			o.Scales.X.Min = opts.YMin
-			o.Scales.X.Max = opts.YMax
-		} else {
-			if o.Scales.Y == nil {
-				o.Scales.Y = &chartAxis{}
-			}
-			o.Scales.Y.Min = opts.YMin
-			o.Scales.Y.Max = opts.YMax
-		}
+		applyYBounds(o, opts.YMin, opts.YMax, isHorizontal)
 	}
+}
+
+// applyYBounds applies min/max to the value axis: Y for normal orientation, X for horizontal.
+func applyYBounds(o *chartOptions, min, max *float64, isHorizontal bool) {
+	if isHorizontal {
+		ax := ensureScaleX(o)
+		ax.Min = min
+		ax.Max = max
+	} else {
+		ax := ensureScaleY(o)
+		ax.Min = min
+		ax.Max = max
+	}
+}
+
+func ensureScaleX(o *chartOptions) *chartAxis {
+	if o.Scales == nil {
+		o.Scales = &chartScales{}
+	}
+	if o.Scales.X == nil {
+		o.Scales.X = &chartAxis{}
+	}
+	return o.Scales.X
+}
+
+func ensureScaleY(o *chartOptions) *chartAxis {
+	if o.Scales == nil {
+		o.Scales = &chartScales{}
+	}
+	if o.Scales.Y == nil {
+		o.Scales.Y = &chartAxis{}
+	}
+	return o.Scales.Y
 }
