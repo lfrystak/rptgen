@@ -1,6 +1,6 @@
 package rptgen
 
-import _ "embed"
+import _ "embed" // required for go:embed directives below
 
 // ChartJSVersion is the version of the Chart.js UMD bundle embedded in this package.
 // To upgrade: download the new chart.umd.min.js from

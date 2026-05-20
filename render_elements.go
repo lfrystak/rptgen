@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+const closingDiv = "          </div>\n"
+
 // renderElement dispatches to the element's own RenderHTML implementation.
 // Any Element that does not implement HTMLRenderer returns an error.
 func renderElement(elem Element, ctx *HTMLRenderContext) (string, []string, error) {
@@ -26,7 +28,7 @@ func (e *NumberTile) RenderHTML(_ *HTMLRenderContext) (string, []string, error) 
 	if e.Subtitle != "" {
 		fmt.Fprintf(&b, "            <div class=\"tile-subtitle\">%s</div>\n", html.EscapeString(e.Subtitle))
 	}
-	b.WriteString("          </div>\n")
+	b.WriteString(closingDiv)
 	return b.String(), nil, nil
 }
 
@@ -40,7 +42,7 @@ func (e *DateTile) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	if e.Subtitle != "" {
 		fmt.Fprintf(&b, "            <div class=\"tile-subtitle\">%s</div>\n", html.EscapeString(e.Subtitle))
 	}
-	b.WriteString("          </div>\n")
+	b.WriteString(closingDiv)
 	return b.String(), nil, nil
 }
 
@@ -55,7 +57,7 @@ func (e *FreeText) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	} else {
 		fmt.Fprintf(&b, "            <p>%s</p>\n", html.EscapeString(e.Content))
 	}
-	b.WriteString("          </div>\n")
+	b.WriteString(closingDiv)
 	return b.String(), nil, nil
 }
 
@@ -103,7 +105,7 @@ func (e *Canvas) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
 		allScripts = append(allScripts, scripts...)
 		b.WriteString("            </div>\n")
 	}
-	b.WriteString("          </div>\n")
+	b.WriteString(closingDiv)
 	return b.String(), allScripts, nil
 }
 
@@ -118,7 +120,7 @@ func RenderChartContainer(id, title, tooltip string) string {
 		fmt.Fprintf(&b, "            <h3 class=\"element-title\">%s</h3>\n", html.EscapeString(title))
 	}
 	fmt.Fprintf(&b, "            <canvas id=\"%s\"></canvas>\n", html.EscapeString(id))
-	b.WriteString("          </div>\n")
+	b.WriteString(closingDiv)
 	return b.String()
 }
 
