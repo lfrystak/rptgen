@@ -63,12 +63,13 @@ func (e *FreeText) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 func (e *Table) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element table-wrapper\">\n")
+	b.WriteString("            <table>\n")
 	if e.Title != "" {
-		fmt.Fprintf(&b, "            <h3 class=\"element-title\">%s</h3>\n", html.EscapeString(e.Title))
+		fmt.Fprintf(&b, "              <caption class=\"element-title\">%s</caption>\n", html.EscapeString(e.Title))
 	}
-	b.WriteString("            <table>\n              <thead><tr>")
+	b.WriteString("              <thead><tr>")
 	for _, col := range e.Columns {
-		fmt.Fprintf(&b, "<th>%s</th>", html.EscapeString(col))
+		fmt.Fprintf(&b, "<th scope=\"col\">%s</th>", html.EscapeString(col))
 	}
 	b.WriteString("</tr></thead>\n              <tbody>\n")
 	for _, row := range e.Rows {
@@ -125,5 +126,6 @@ func tooltipIcon(tooltip string) string {
 	if tooltip == "" {
 		return ""
 	}
-	return fmt.Sprintf("            <span class=\"tooltip-icon\" data-tooltip=\"%s\">&#9432;</span>\n", html.EscapeString(tooltip))
+	esc := html.EscapeString(tooltip)
+	return fmt.Sprintf("            <span class=\"tooltip-icon\" data-tooltip=\"%s\" title=\"%s\" aria-label=\"%s\" tabindex=\"0\">&#9432;</span>\n", esc, esc, esc)
 }

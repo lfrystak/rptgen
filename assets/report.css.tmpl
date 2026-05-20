@@ -141,7 +141,8 @@ tbody tr:hover td {
   cursor: help;
   z-index: 10;
 }
-.tooltip-icon:hover { color: {{.AccentColor}}; }
+.tooltip-icon:hover,
+.tooltip-icon:focus { color: {{.AccentColor}}; outline: 2px solid {{.AccentColor}}; outline-offset: 2px; }
 .tooltip-icon::after {
   content: attr(data-tooltip);
   display: none;
@@ -161,7 +162,9 @@ tbody tr:hover td {
   pointer-events: none;
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
-.tooltip-icon:hover::after { display: block; }
+.tooltip-icon:hover::after,
+.tooltip-icon:focus::after { display: block; }
+table caption { text-align: left; }
 {{- if .EnableAnimations}}
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
