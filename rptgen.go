@@ -13,7 +13,7 @@ type Element interface {
 // Report is the top-level document container.
 type Report struct {
 	Title       string
-	Lang        string    // BCP-47 language tag for the HTML lang attribute, e.g. "en", "de". Defaults to "en".
+	Lang        string // BCP-47 language tag for the HTML lang attribute, e.g. "en", "de". Defaults to "en".
 	Sections    []*Section
 	GeneratedAt time.Time
 	Footer      string
