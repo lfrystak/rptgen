@@ -15,8 +15,10 @@ type HtmlRenderer struct{}
 // docData is the context passed to the HTML document template.
 type docData struct {
 	Title        string
+	Lang         string
 	CSS          template.CSS
 	LogoURL      string
+	LogoAlt      string
 	GeneratedAt  string
 	Footer       string
 	Sections     []template.HTML
@@ -28,7 +30,7 @@ type docData struct {
 // LogoURL, GeneratedAt, Footer) are auto-escaped by html/template. Section content
 // and chart scripts are pre-rendered and marked safe via template.HTML / template.JS.
 var docTemplate = template.Must(template.New("doc").Parse(`<!DOCTYPE html>
-<html lang="en">
+<html lang="{{.Lang}}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -40,7 +42,7 @@ var docTemplate = template.Must(template.New("doc").Parse(`<!DOCTYPE html>
   <div class="report">
     <header class="report-header">
 {{- if .LogoURL}}
-      <img src="{{.LogoURL}}" alt="logo">
+      <img src="{{.LogoURL}}" alt="{{.LogoAlt}}">
 {{- end}}
       <h1 class="report-title">{{.Title}}</h1>
 {{- if .GeneratedAt}}
@@ -93,10 +95,21 @@ func (h HtmlRenderer) Render(w io.Writer, report *Report, theme *Theme) error {
 		generatedAt = report.GeneratedAt.Format("2006-01-02 15:04:05")
 	}
 
+	lang := report.Lang
+	if lang == "" {
+		lang = "en"
+	}
+	logoAlt := report.LogoAlt
+	if logoAlt == "" && report.LogoURL != "" {
+		logoAlt = report.Title + " logo"
+	}
+
 	data := docData{
 		Title:        report.Title,
+		Lang:         lang,
 		CSS:          template.CSS(generateCSS(theme)),
 		LogoURL:      report.LogoURL,
+		LogoAlt:      logoAlt,
 		GeneratedAt:  generatedAt,
 		Footer:       report.Footer,
 		Sections:     sections,

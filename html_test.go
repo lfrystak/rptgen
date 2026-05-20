@@ -988,3 +988,102 @@ func TestRenderErrorPropagated(t *testing.T) {
 		t.Fatal("expected error for unknown element type, got nil")
 	}
 }
+
+// --- spec 018: HTML accessibility / quality ---
+
+func TestDocLangDefaultsToEn(t *testing.T) {
+	r := NewReport("Lang Test")
+	r.AddSection(&Section{})
+	out := renderHTML(t, r, nil)
+	if !strings.Contains(out, `lang="en"`) {
+		t.Error("output must contain lang=\"en\" when Report.Lang is empty")
+	}
+}
+
+func TestDocLangCustom(t *testing.T) {
+	r := NewReport("Lang Test")
+	r.Lang = "de"
+	r.AddSection(&Section{})
+	out := renderHTML(t, r, nil)
+	if !strings.Contains(out, `lang="de"`) {
+		t.Errorf("output must contain lang=\"de\" when Report.Lang is \"de\"; got lang= section: %q",
+			out[:strings.Index(out, ">")+1])
+	}
+	if strings.Contains(out, `lang="en"`) {
+		t.Error("output must not contain lang=\"en\" when Report.Lang is \"de\"")
+	}
+}
+
+func TestLogoAltDefaultsDerivedFromTitle(t *testing.T) {
+	r := NewReport("My Report")
+	r.LogoURL = "https://example.com/logo.png"
+	r.AddSection(&Section{})
+	out := renderHTML(t, r, nil)
+	if !strings.Contains(out, `alt="My Report logo"`) {
+		t.Error("logo alt must default to \"<Title> logo\" when LogoAlt is empty")
+	}
+}
+
+func TestLogoAltCustom(t *testing.T) {
+	r := NewReport("My Report")
+	r.LogoURL = "https://example.com/logo.png"
+	r.LogoAlt = "Company brand mark"
+	r.AddSection(&Section{})
+	out := renderHTML(t, r, nil)
+	if !strings.Contains(out, `alt="Company brand mark"`) {
+		t.Error("logo alt must use Report.LogoAlt when it is set")
+	}
+	if strings.Contains(out, `alt="logo"`) {
+		t.Error("output must not contain the old static alt=\"logo\"")
+	}
+}
+
+func TestTableThScopeCol(t *testing.T) {
+	r := NewReport("T")
+	section := &Section{}
+	section.AddElement(NewTableWithColumns("Data", []map[string]any{
+		{"Name": "Alice", "Score": 95},
+	}, []string{"Name", "Score"}))
+	r.AddSection(section)
+	out := renderHTML(t, r, nil)
+	if !strings.Contains(out, `scope="col"`) {
+		t.Error("table <th> elements must have scope=\"col\"")
+	}
+}
+
+func TestTableTitleRenderedAsCaption(t *testing.T) {
+	r := NewReport("T")
+	section := &Section{}
+	section.AddElement(NewTable("Results Table", []map[string]any{
+		{"col1": "v1"},
+	}))
+	r.AddSection(section)
+	out := renderHTML(t, r, nil)
+	if !strings.Contains(out, `<caption class="element-title">Results Table</caption>`) {
+		t.Error("table title must be rendered as <caption class=\"element-title\"> inside <table>")
+	}
+	if strings.Contains(out, `<h3 class="element-title">Results Table</h3>`) {
+		t.Error("table title must not be rendered as <h3> outside the table")
+	}
+}
+
+func TestTooltipHasTitleAttribute(t *testing.T) {
+	got := tooltipIcon("hover info text")
+	if !strings.Contains(got, `title="hover info text"`) {
+		t.Errorf("tooltip must include title attribute; got %q", got)
+	}
+}
+
+func TestTooltipHasAriaLabel(t *testing.T) {
+	got := tooltipIcon("screen reader text")
+	if !strings.Contains(got, `aria-label="screen reader text"`) {
+		t.Errorf("tooltip must include aria-label attribute; got %q", got)
+	}
+}
+
+func TestTooltipIsKeyboardFocusable(t *testing.T) {
+	got := tooltipIcon("focusable tooltip")
+	if !strings.Contains(got, `tabindex="0"`) {
+		t.Errorf("tooltip must include tabindex=\"0\" for keyboard access; got %q", got)
+	}
+}
