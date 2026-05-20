@@ -10,11 +10,13 @@ import (
 
 // NumberTile displays a single numeric metric.
 type NumberTile struct {
-	Title        string
-	Value        float64
-	Format       string // fmt.Sprintf format, e.g. "%.2f", "%.0f", "%.1f%%". Empty = raw float.
+	Title  string
+	Value  float64
+	Format string // fmt.Sprintf format for a float64, e.g. "%.2f", "%.0f", "%.1f%%". Empty = raw decimal.
+	// Only float verbs produce valid output (f, F, e, E, g, G, x, X, b); other verbs cause fmt to emit
+	// its %!verb(...) error sentinel, which FormatValue surfaces verbatim so the problem is visible.
 	Prefix       string // prepended to the formatted value, e.g. "$", "€"
-	ThousandsSep bool   // insert comma thousands separator into the integer part
+	ThousandsSep bool   // insert comma thousands separator; only effective with decimal (f/F-verb) formats
 	Subtitle     string
 	Tooltip      string
 }
@@ -36,14 +38,37 @@ func (n *NumberTile) FormatValue() string {
 		s = strconv.FormatFloat(n.Value, 'f', -1, 64)
 	} else {
 		s = fmt.Sprintf(n.Format, n.Value)
+		// Surface fmt's %! error sentinel immediately; further processing would only mangle it.
+		if strings.Contains(s, "%!") {
+			return s
+		}
 	}
-	if n.ThousandsSep {
+	if n.ThousandsSep && isDecimalOutput(s) {
 		s = addThousandsSep(s)
 	}
 	if n.Prefix != "" {
 		s = n.Prefix + s
 	}
 	return s
+}
+
+// isDecimalOutput reports whether s looks like a plain decimal number (optional leading minus,
+// digits, optional dot + digits, optional trailing percent). Only such strings are safe to pass
+// to addThousandsSep; scientific, hex, and other non-decimal fmt outputs are not.
+func isDecimalOutput(s string) bool {
+	trimmed := strings.TrimSuffix(s, "%")
+	if strings.HasPrefix(trimmed, "-") {
+		trimmed = trimmed[1:]
+	}
+	if trimmed == "" {
+		return false
+	}
+	for _, ch := range trimmed {
+		if (ch < '0' || ch > '9') && ch != '.' {
+			return false
+		}
+	}
+	return true
 }
 
 // addThousandsSep inserts comma thousands separators into the integer part of a formatted number string.

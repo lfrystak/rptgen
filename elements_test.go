@@ -73,6 +73,17 @@ func TestNumberTileFormatValue(t *testing.T) {
 		{"percentage via fmt pattern", NumberTile{Value: 75.3, Format: "%.1f%%"}, "75.3%"},
 		{"custom sprintf", NumberTile{Value: 3.14159, Format: "%.4f"}, "3.1416"},
 		{"negative with thousands", NumberTile{Value: -1234.5, Format: "%.2f", ThousandsSep: true}, "-1,234.50"},
+		// integer value with no fractional part
+		{"integer value no format", NumberTile{Value: 1000000}, "1000000"},
+		{"integer value thousands", NumberTile{Value: 1000000, Format: "%.0f", ThousandsSep: true}, "1,000,000"},
+		// percentage format + thousands separator: comma should be inserted correctly
+		{"percentage with thousands", NumberTile{Value: 1234.5, Format: "%.1f%%", ThousandsSep: true}, "1,234.5%"},
+		// wrong verb (%d on float64): fmt emits its error sentinel; we surface it verbatim
+		{"wrong verb %d surfaces sentinel", NumberTile{Value: 42, Format: "%d"}, "%!d(float64=42)"},
+		// scientific format: ThousandsSep must be ignored (not corrupt the exponent)
+		{"scientific format no thousands corruption", NumberTile{Value: 1234567.89, Format: "%e", ThousandsSep: true}, "1.234568e+06"},
+		// %g: may choose scientific notation; ThousandsSep must be ignored
+		{"g verb no thousands corruption", NumberTile{Value: 1234567890.0, Format: "%g", ThousandsSep: true}, "1.23456789e+09"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
