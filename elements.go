@@ -57,9 +57,7 @@ func (n *NumberTile) FormatValue() string {
 // to addThousandsSep; scientific, hex, and other non-decimal fmt outputs are not.
 func isDecimalOutput(s string) bool {
 	trimmed := strings.TrimSuffix(s, "%")
-	if strings.HasPrefix(trimmed, "-") {
-		trimmed = trimmed[1:]
-	}
+	trimmed = strings.TrimPrefix(trimmed, "-")
 	if trimmed == "" {
 		return false
 	}
