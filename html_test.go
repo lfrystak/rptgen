@@ -1087,3 +1087,278 @@ func TestTooltipIsKeyboardFocusable(t *testing.T) {
 		t.Errorf("tooltip must include tabindex=\"0\" for keyboard access; got %q", got)
 	}
 }
+
+// --- spec 020: shared ChartOptions ---
+
+// TestChartOptionsZeroValueNoChange verifies that a zero-value ChartOptions does not
+// alter the Chart.js JSON output for any chart type.
+func TestChartOptionsZeroValueNoChange(t *testing.T) {
+	theme := DefaultTheme()
+
+	// BarChart
+	bare := NewBarChart("Sales", []DataPoint{{Label: "A", Value: 1}})
+	withOpts := &BarChart{
+		ChartBase: ChartBase{Title: "Sales", Options: ChartOptions{}},
+		Data:      []DataPoint{{Label: "A", Value: 1}},
+	}
+	s1, err := renderBarChartScript("id", bare, theme)
+	if err != nil {
+		t.Fatalf("bare bar: %v", err)
+	}
+	s2, err := renderBarChartScript("id", withOpts, theme)
+	if err != nil {
+		t.Fatalf("opts bar: %v", err)
+	}
+	if s1 != s2 {
+		t.Errorf("BarChart: zero-value ChartOptions changed output:\ngot:  %s\nwant: %s", s2, s1)
+	}
+
+	// LineChart
+	lBare := NewLineChartSingle("Line", []DataPoint{{Label: "Jan", Value: 10}})
+	lOpts := &LineChart{
+		ChartBase:  ChartBase{Title: "Line", Options: ChartOptions{}},
+		Series:     []LineSeries{{Name: "Line", Points: []DataPoint{{Label: "Jan", Value: 10}}}},
+		ShowPoints: true,
+	}
+	ls1, err := renderLineChartScript("id", lBare, theme)
+	if err != nil {
+		t.Fatalf("bare line: %v", err)
+	}
+	ls2, err := renderLineChartScript("id", lOpts, theme)
+	if err != nil {
+		t.Fatalf("opts line: %v", err)
+	}
+	if ls1 != ls2 {
+		t.Errorf("LineChart: zero-value ChartOptions changed output:\ngot:  %s\nwant: %s", ls2, ls1)
+	}
+
+	// PieChart
+	pBare := NewPieChart("Pie", []DataPoint{{Label: "A", Value: 60}, {Label: "B", Value: 40}})
+	pOpts := &PieChart{
+		ChartBase: ChartBase{Title: "Pie", Options: ChartOptions{}},
+		Data:      []DataPoint{{Label: "A", Value: 60}, {Label: "B", Value: 40}},
+	}
+	ps1, err := renderPieChartScript("id", pBare, theme)
+	if err != nil {
+		t.Fatalf("bare pie: %v", err)
+	}
+	ps2, err := renderPieChartScript("id", pOpts, theme)
+	if err != nil {
+		t.Fatalf("opts pie: %v", err)
+	}
+	if ps1 != ps2 {
+		t.Errorf("PieChart: zero-value ChartOptions changed output:\ngot:  %s\nwant: %s", ps2, ps1)
+	}
+}
+
+// TestChartOptionsLegendPosition verifies that LegendPosition is reflected in the
+// Chart.js plugins.legend.position field.
+func TestChartOptionsLegendPosition(t *testing.T) {
+	chart := &LineChart{
+		ChartBase: ChartBase{
+			Title:   "Trend",
+			Options: ChartOptions{LegendPosition: "bottom"},
+		},
+		Series: []LineSeries{
+			{Name: "Alpha", Points: []DataPoint{{Label: "Q1", Value: 10}}},
+			{Name: "Beta", Points: []DataPoint{{Label: "Q1", Value: 5}}},
+		},
+		ShowPoints: true,
+	}
+	script, err := renderLineChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartScript: %v", err)
+	}
+	if !strings.Contains(script, `"position":"bottom"`) {
+		t.Errorf("script must contain position:bottom; got: %s", script)
+	}
+	if !strings.Contains(script, `"display":true`) {
+		t.Errorf("legend must remain visible when position is set; got: %s", script)
+	}
+}
+
+// TestChartOptionsLegendNoneHidesLegend verifies that LegendPosition="none" hides
+// the legend even for chart types that show it by default.
+func TestChartOptionsLegendNoneHidesLegend(t *testing.T) {
+	chart := &LineChart{
+		ChartBase: ChartBase{
+			Title:   "Trend",
+			Options: ChartOptions{LegendPosition: "none"},
+		},
+		Series: []LineSeries{
+			{Name: "Alpha", Points: []DataPoint{{Label: "Q1", Value: 10}}},
+			{Name: "Beta", Points: []DataPoint{{Label: "Q1", Value: 5}}},
+		},
+		ShowPoints: true,
+	}
+	script, err := renderLineChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
+	if cfg.Options.Plugins == nil || cfg.Options.Plugins.Legend == nil {
+		t.Fatal("Plugins.Legend must be present")
+	}
+	if cfg.Options.Plugins.Legend.Display {
+		t.Error("Legend.Display must be false when LegendPosition is \"none\"")
+	}
+}
+
+// TestChartOptionsAxisTitles verifies that XAxisTitle and YAxisTitle appear in the
+// Chart.js scales config for a cartesian chart.
+func TestChartOptionsAxisTitles(t *testing.T) {
+	chart := NewBarChart("Revenue", []DataPoint{{Label: "Jan", Value: 50}})
+	chart.Options.XAxisTitle = "Month"
+	chart.Options.YAxisTitle = "USD"
+
+	script, err := renderBarChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	if !strings.Contains(script, `"Month"`) {
+		t.Errorf("script must contain X axis title Month; got: %s", script)
+	}
+	if !strings.Contains(script, `"USD"`) {
+		t.Errorf("script must contain Y axis title USD; got: %s", script)
+	}
+	if !strings.Contains(script, `"display":true`) {
+		t.Errorf("axis title display must be true; got: %s", script)
+	}
+}
+
+// TestChartOptionsYMinYMax verifies that YMin and YMax are applied to the value axis.
+func TestChartOptionsYMinYMax(t *testing.T) {
+	min, max := -10.0, 200.0
+	chart := NewBarChart("Revenue", []DataPoint{{Label: "Jan", Value: 50}})
+	chart.Options.YMin = &min
+	chart.Options.YMax = &max
+
+	script, err := renderBarChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	if !strings.Contains(script, `"min":-10`) {
+		t.Errorf("script must contain min:-10; got: %s", script)
+	}
+	if !strings.Contains(script, `"max":200`) {
+		t.Errorf("script must contain max:200; got: %s", script)
+	}
+}
+
+// TestChartOptionsYMinYMaxHorizontal verifies that YMin/YMax land on the X axis for
+// horizontal bar charts (the value axis is X in Chart.js horizontal layout).
+func TestChartOptionsYMinYMaxHorizontal(t *testing.T) {
+	min, max := 0.0, 500.0
+	chart := &BarChart{
+		ChartBase:    ChartBase{Title: "H", Options: ChartOptions{YMin: &min, YMax: &max}},
+		Data:         []DataPoint{{Label: "A", Value: 100}},
+		IsHorizontal: true,
+	}
+	script, err := renderBarChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	// JSON uses the Go struct layout: "x":{...,"min":0,"max":500}
+	if !strings.Contains(script, `"min":0`) {
+		t.Errorf("script must contain min:0 on value (X) axis; got: %s", script)
+	}
+	if !strings.Contains(script, `"max":500`) {
+		t.Errorf("script must contain max:500 on value (X) axis; got: %s", script)
+	}
+}
+
+// TestChartOptionsAxisTitlesIgnoredForPie verifies that axis options have no effect
+// on non-cartesian charts and do not cause an error.
+func TestChartOptionsAxisTitlesIgnoredForPie(t *testing.T) {
+	min, max := 0.0, 100.0
+	chart := &PieChart{
+		ChartBase: ChartBase{
+			Title: "Mix",
+			Options: ChartOptions{
+				XAxisTitle: "Category",
+				YAxisTitle: "Percent",
+				YMin:       &min,
+				YMax:       &max,
+			},
+		},
+		Data: []DataPoint{{Label: "A", Value: 60}, {Label: "B", Value: 40}},
+	}
+	script, err := renderPieChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderPieChartScript: %v", err)
+	}
+	if strings.Contains(script, `"scales"`) {
+		t.Errorf("scales must not appear in pie chart JSON; got: %s", script)
+	}
+}
+
+// TestChartOptionsShowTooltipsFalse verifies that ShowTooltips=false emits
+// plugins.tooltip.enabled:false in the Chart.js config.
+func TestChartOptionsShowTooltipsFalse(t *testing.T) {
+	disabled := false
+	chart := NewBarChart("Sales", []DataPoint{{Label: "Jan", Value: 50}})
+	chart.Options.ShowTooltips = &disabled
+
+	script, err := renderBarChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	if !strings.Contains(script, `"tooltip":{"enabled":false}`) {
+		t.Errorf("script must contain tooltip.enabled:false; got: %s", script)
+	}
+}
+
+// TestChartOptionsShowChartTitle verifies that ShowChartTitle=true emits a
+// Chart.js native plugins.title block.
+func TestChartOptionsShowChartTitle(t *testing.T) {
+	chart := NewBarChart("Monthly Revenue", []DataPoint{{Label: "Jan", Value: 50}})
+	chart.Options.ShowChartTitle = true
+
+	script, err := renderBarChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	if !strings.Contains(script, `"Monthly Revenue"`) {
+		t.Errorf("script must contain chart title text; got: %s", script)
+	}
+	if !strings.Contains(script, `"title":{"display":true`) {
+		t.Errorf("script must contain plugins.title.display:true; got: %s", script)
+	}
+}
+
+// TestChartOptionsAspectRatioOverride verifies that AspectRatio replaces the default.
+func TestChartOptionsAspectRatioOverride(t *testing.T) {
+	ratio := 3.5
+	chart := NewBarChart("Sales", []DataPoint{{Label: "Jan", Value: 50}})
+	chart.Options.AspectRatio = &ratio
+
+	script, err := renderBarChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	if !strings.Contains(script, `"aspectRatio":3.5`) {
+		t.Errorf("script must contain aspectRatio:3.5; got: %s", script)
+	}
+}
+
+// TestChartOptionsStackedBarPreservesStacked verifies that applying ChartOptions
+// axis titles to a StackedBarChart does not remove the stacked:true flag on existing
+// axis config.
+func TestChartOptionsStackedBarPreservesStacked(t *testing.T) {
+	chart := NewStackedBarChart("Perf", []StackedBarSeries{
+		{Category: "Q1", Values: map[string]float64{"S1": 10, "S2": 20}},
+	})
+	chart.Options.YAxisTitle = "Units"
+
+	script, err := renderStackedBarChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderStackedBarChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
+	if cfg.Options.Scales == nil || cfg.Options.Scales.Y == nil || !cfg.Options.Scales.Y.Stacked {
+		t.Error("Y axis stacked flag must be preserved after applying ChartOptions")
+	}
+	if cfg.Options.Scales.Y.Title == nil || cfg.Options.Scales.Y.Title.Text != "Units" {
+		t.Errorf("Y axis title must be \"Units\"; got: %+v", cfg.Options.Scales.Y.Title)
+	}
+}

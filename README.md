@@ -330,6 +330,55 @@ chart := rptgen.NewStackedBarChart("Quarterly Performance", []rptgen.StackedBarS
 })
 ```
 
+#### `ScatterChart`
+
+Scatter plot where each point is an independent `{X, Y}` coordinate pair.
+
+| Field    | Type             | Description                          |
+|----------|------------------|--------------------------------------|
+| `Title`  | `string`         | Chart heading.                       |
+| `Points` | `[]ScatterPoint` | Ordered slice of `{X, Y}` points.   |
+| `Tooltip`| `string`         | Hover text on the chart card.        |
+
+```go
+chart := rptgen.NewScatterChart("Correlation", []rptgen.ScatterPoint{
+    {X: 1.2, Y: 3.4},
+    {X: 2.5, Y: 5.1},
+    {X: 3.7, Y: 4.8},
+})
+```
+
+### Common Chart Options
+
+Every chart type embeds `ChartBase`, which carries an `Options ChartOptions` field.
+`ChartOptions` exposes the Chart.js options that are common across all chart types.
+Zero values preserve Chart.js defaults — existing charts require no changes.
+
+| Field            | Type      | Default    | Description                                                                                   |
+|------------------|-----------|------------|-----------------------------------------------------------------------------------------------|
+| `LegendPosition` | `string`  | `""`       | `"top"`, `"bottom"`, `"left"`, `"right"`, or `"none"` (hides legend). Empty = chart default. |
+| `XAxisTitle`     | `string`  | `""`       | Label for the X axis. Ignored for non-cartesian charts (pie, doughnut).                       |
+| `YAxisTitle`     | `string`  | `""`       | Label for the Y axis. Ignored for non-cartesian charts.                                       |
+| `YMin`           | `*float64`| `nil`      | Clamp the value-axis minimum. For horizontal bars, applied to the X (value) axis.            |
+| `YMax`           | `*float64`| `nil`      | Clamp the value-axis maximum. For horizontal bars, applied to the X (value) axis.            |
+| `ShowTooltips`   | `*bool`   | `nil`      | Set to `false` to disable Chart.js data-point tooltips. Nil = Chart.js default (enabled).   |
+| `AspectRatio`    | `*float64`| `nil`      | Width-to-height ratio. Nil uses the per-chart-type default (2.0 for most types).            |
+| `ShowChartTitle` | `bool`    | `false`    | Emit a Chart.js native title block inside the canvas (in addition to the HTML `<h3>`).       |
+
+All future chart types (021–027) inherit these options automatically through `ChartBase`.
+
+```go
+falseVal := false
+chart := rptgen.NewBarChart("Revenue by Month", data)
+chart.Options.LegendPosition = "bottom"
+chart.Options.XAxisTitle = "Month"
+chart.Options.YAxisTitle = "USD"
+chart.Options.YMin = func() *float64 { v := 0.0; return &v }()
+chart.Options.ShowTooltips = &falseVal
+chart.Options.AspectRatio = func() *float64 { v := 3.0; return &v }()
+chart.Options.ShowChartTitle = true
+```
+
 ## Theming
 
 `Theme` controls the visual appearance of the rendered report.

@@ -63,6 +63,7 @@ func (e *ScatterChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, err
 		},
 		Options: chartOptions{Responsive: true, AspectRatio: &ratio},
 	}
+	applyChartOptions(&cfg.Options, e.Options, e.Title, true, false)
 	id := ctx.NextID(e.Title)
 	script, err := ChartInitScript(id, cfg)
 	if err != nil {
@@ -124,6 +125,7 @@ func renderBarChartScript(id string, e *BarChart, theme *Theme) (string, error) 
 			Plugins:     &chartPlugins{Legend: &chartLegend{Display: false}},
 		},
 	}
+	applyChartOptions(&cfg.Options, e.Options, e.Title, true, e.IsHorizontal)
 	return ChartInitScript(id, cfg)
 }
 
@@ -180,6 +182,7 @@ func renderLineChartScript(id string, e *LineChart, theme *Theme) (string, error
 			Plugins:     &chartPlugins{Legend: &chartLegend{Display: len(e.Series) > 1}},
 		},
 	}
+	applyChartOptions(&cfg.Options, e.Options, e.Title, true, false)
 	return ChartInitScript(id, cfg)
 }
 
@@ -208,6 +211,7 @@ func renderPieChartScript(id string, e *PieChart, theme *Theme) (string, error) 
 		},
 		Options: chartOptions{Responsive: true, AspectRatio: &ratio},
 	}
+	applyChartOptions(&cfg.Options, e.Options, e.Title, false, false)
 	return ChartInitScript(id, cfg)
 }
 
@@ -262,5 +266,6 @@ func renderStackedBarChartScript(id string, e *StackedBarChart, theme *Theme) (s
 			Scales:      &chartScales{X: stacked, Y: stacked},
 		},
 	}
+	applyChartOptions(&cfg.Options, e.Options, e.Title, true, e.IsHorizontal)
 	return ChartInitScript(id, cfg)
 }
