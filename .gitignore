@@ -42,3 +42,6 @@ dist/
 # Generated reports
 report-custom.html
 report.html
+
+# golangci-lint output
+golangci-lint-sarif.json
