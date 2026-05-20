@@ -20,30 +20,25 @@ func renderElement(elem Element, ctx *HTMLRenderContext) (string, []string, erro
 
 // RenderHTML implements HTMLRenderer for NumberTile.
 func (e *NumberTile) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
-	var b strings.Builder
-	b.WriteString("          <div class=\"element tile number-tile\">\n")
-	b.WriteString(tooltipIcon(e.Tooltip))
-	fmt.Fprintf(&b, "            <div class=\"tile-title\">%s</div>\n", html.EscapeString(e.Title))
-	fmt.Fprintf(&b, "            <div class=\"tile-value\">%s</div>\n", html.EscapeString(e.FormatValue()))
-	if e.Subtitle != "" {
-		fmt.Fprintf(&b, "            <div class=\"tile-subtitle\">%s</div>\n", html.EscapeString(e.Subtitle))
-	}
-	b.WriteString(closingDiv)
-	return b.String(), nil, nil
+	return renderTileHTML("number-tile", e.Tooltip, e.Title, e.FormatValue(), e.Subtitle), nil, nil
 }
 
 // RenderHTML implements HTMLRenderer for DateTile.
 func (e *DateTile) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
+	return renderTileHTML("date-tile", e.Tooltip, e.Title, e.FormatValue(), e.Subtitle), nil, nil
+}
+
+func renderTileHTML(cssClass, tooltip, title, value, subtitle string) string {
 	var b strings.Builder
-	b.WriteString("          <div class=\"element tile date-tile\">\n")
-	b.WriteString(tooltipIcon(e.Tooltip))
-	fmt.Fprintf(&b, "            <div class=\"tile-title\">%s</div>\n", html.EscapeString(e.Title))
-	fmt.Fprintf(&b, "            <div class=\"tile-value\">%s</div>\n", html.EscapeString(e.FormatValue()))
-	if e.Subtitle != "" {
-		fmt.Fprintf(&b, "            <div class=\"tile-subtitle\">%s</div>\n", html.EscapeString(e.Subtitle))
+	fmt.Fprintf(&b, "          <div class=\"element tile %s\">\n", cssClass)
+	b.WriteString(tooltipIcon(tooltip))
+	fmt.Fprintf(&b, "            <div class=\"tile-title\">%s</div>\n", html.EscapeString(title))
+	fmt.Fprintf(&b, "            <div class=\"tile-value\">%s</div>\n", html.EscapeString(value))
+	if subtitle != "" {
+		fmt.Fprintf(&b, "            <div class=\"tile-subtitle\">%s</div>\n", html.EscapeString(subtitle))
 	}
 	b.WriteString(closingDiv)
-	return b.String(), nil, nil
+	return b.String()
 }
 
 // RenderHTML implements HTMLRenderer for FreeText.
