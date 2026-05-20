@@ -35,16 +35,27 @@ func main() {
     report := rptgen.NewReport("Monthly Summary")
     report.Footer = "Internal use only"
 
-    section := &rptgen.Section{Title: "KPIs", ColumnWidths: []int{1, 1}}
-    section.AddElement(&rptgen.NumberTile{Title: "Revenue", Value: 98000, Format: "%.0f", Prefix: "$", ThousandsSep: true})
-    section.AddElement(&rptgen.NumberTile{Title: "Growth", Value: 12.0, Format: "%.1f%%"})
+    section := rptgen.NewSection("KPIs", 1, 1)
+
+    rev := rptgen.NewNumberTile("Revenue", 98000)
+    rev.Format = "%.0f"
+    rev.Prefix = "$"
+    rev.ThousandsSep = true
+    section.AddElement(rev)
+
+    growth := rptgen.NewNumberTile("Growth", 12.0)
+    growth.Format = "%.1f%%"
+    section.AddElement(growth)
     report.AddSection(section)
 
-    html, err := rptgen.HtmlRenderer{}.Render(report, nil) // nil = default theme
+    f, err := os.Create("report.html")
     if err != nil {
         log.Fatal(err)
     }
-    os.WriteFile("report.html", []byte(html), 0644)
+    defer f.Close()
+    if err := rptgen.HtmlRenderer{}.Render(f, report, nil); err != nil { // nil = default theme
+        log.Fatal(err)
+    }
 }
 ```
 
@@ -70,7 +81,8 @@ report.Footer  = "Confidential"
 
 ### `Section`
 
-A section groups elements into a CSS grid row.
+A section groups elements into a CSS grid row within a `Report`.
+`Section` is a layout row; it is not itself an `Element`. Use [`Canvas`](#canvas) when you need a nestable sub-grid element placed inside a section column.
 
 | Field          | Type       | Description                                                                 |
 |----------------|------------|-----------------------------------------------------------------------------|
@@ -78,12 +90,18 @@ A section groups elements into a CSS grid row.
 | `Elements`     | `[]Element` | Ordered list of elements in the section.                                   |
 | `ColumnWidths` | `[]int`    | Proportional column widths. `[]int{1, 2}` = 33 %/67 %. Nil = one column. |
 
-Use `EqualColumns(n)` to create n equal-width columns without spelling out the slice:
-
 ```go
-// Two equal columns — both are equivalent
-section := &rptgen.Section{Title: "Revenue", ColumnWidths: rptgen.EqualColumns(2)}
-section := &rptgen.Section{Title: "Revenue", ColumnWidths: []int{1, 1}}
+// Single column (no widths)
+section := rptgen.NewSection("Summary")
+
+// Two equal columns
+section := rptgen.NewSection("Revenue", 1, 1)
+
+// Four equal columns via EqualColumns helper
+section := rptgen.NewSection("KPIs", rptgen.EqualColumns(4)...)
+
+// Custom ratio: 33%/67%
+section := rptgen.NewSection("Charts", 1, 2)
 
 section.AddElement(chart1)
 section.AddElement(chart2)
@@ -107,9 +125,18 @@ Displays a single numeric metric.
 | `Tooltip`      | `string`  | Hover text on the tile card.                                             |
 
 ```go
-&rptgen.NumberTile{Title: "Revenue", Value: 98000, Format: "%.0f", Prefix: "$", ThousandsSep: true}
-&rptgen.NumberTile{Title: "Growth",  Value: 12.0,  Format: "%.1f%%", Subtitle: "↑ vs Q1"}
-&rptgen.NumberTile{Title: "Score",   Value: 4.7,   Format: "%.1f",   Tooltip: "Out of 5"}
+rev := rptgen.NewNumberTile("Revenue", 98000)
+rev.Format = "%.0f"
+rev.Prefix = "$"
+rev.ThousandsSep = true
+
+growth := rptgen.NewNumberTile("Growth", 12.0)
+growth.Format = "%.1f%%"
+growth.Subtitle = "↑ vs Q1"
+
+score := rptgen.NewNumberTile("Score", 4.7)
+score.Format = "%.1f"
+score.Tooltip = "Out of 5"
 ```
 
 #### `DateTile`
@@ -125,11 +152,8 @@ Displays a date or datetime metric.
 | `Tooltip`  | `string`    | Hover text on the tile card.                                         |
 
 ```go
-&rptgen.DateTile{
-    Title:  "Quarter End",
-    Value:  time.Date(2024, 6, 30, 0, 0, 0, 0, time.UTC),
-    Format: "January 02, 2006",
-}
+tile := rptgen.NewDateTile("Quarter End", time.Date(2024, 6, 30, 0, 0, 0, 0, time.UTC))
+tile.Format = "January 02, 2006"
 ```
 
 #### `FreeText`
@@ -141,9 +165,16 @@ Displays a block of plain text or raw HTML.
 | `Content` | `string` | The text (or HTML) to render.                                       |
 | `IsHTML`  | `bool`   | If `true`, `Content` is injected as-is. If `false`, it is escaped. |
 
+> **Security note:** When `IsHTML` is `true`, `Content` is written into the document verbatim
+> with **no escaping**. If the value originates from user input or any untrusted source you
+> must sanitize it (e.g. with [bluemonday](https://github.com/microcosm-cc/bluemonday)) before
+> passing it to `FreeText`. Failing to do so allows stored XSS.
+
 ```go
-&rptgen.FreeText{Content: "Plain paragraph text."}
-&rptgen.FreeText{Content: "<p>Rich <strong>HTML</strong> content.</p>", IsHTML: true}
+rptgen.NewFreeText("Plain paragraph text.")
+
+html := rptgen.NewFreeText("<p>Rich <strong>HTML</strong> content.</p>")
+html.IsHTML = true
 ```
 
 #### `Table`
@@ -174,7 +205,8 @@ rptgen.NewTableFromColumns("Sales", map[string][]any{
 
 #### `Canvas`
 
-A flexible sub-grid container that nests elements inside a section column.
+A nestable sub-grid element placed inside a `Section` column.
+Unlike `Section` (a top-level layout row), `Canvas` is itself an `Element` and can be nested at any depth.
 
 | Field          | Type       | Description                                                              |
 |----------------|------------|--------------------------------------------------------------------------|
@@ -199,20 +231,26 @@ Charts are rendered using Chart.js, embedded inline — no CDN calls required.
 
 Single-series vertical or horizontal bar chart.
 
-| Field          | Type                  | Description                              |
-|----------------|-----------------------|------------------------------------------|
-| `Title`        | `string`              | Chart heading.                           |
-| `Data`         | `map[string]float64`  | Label → value pairs.                     |
-| `IsHorizontal` | `bool`                | Render bars horizontally if `true`.      |
-| `Tooltip`      | `string`              | Hover text on the chart card.            |
+| Field          | Type            | Description                                                     |
+|----------------|-----------------|-----------------------------------------------------------------|
+| `Title`        | `string`        | Chart heading.                                                  |
+| `Data`         | `[]DataPoint`   | Ordered label-value pairs. Axis order matches slice order.      |
+| `IsHorizontal` | `bool`          | Render bars horizontally if `true`.                             |
+| `Tooltip`      | `string`        | Hover text on the chart card.                                   |
 
 ```go
-chart := rptgen.NewBarChart("Sales by Region", map[string]float64{
-    "North America": 125000,
-    "Europe":        98000,
+chart := rptgen.NewBarChart("Sales by Region", []rptgen.DataPoint{
+    {Label: "Asia Pacific",  Value: 142000},
+    {Label: "North America", Value: 125000},
+    {Label: "Europe",        Value: 98000},
+    {Label: "Latin America", Value: 67000},
 })
 chart.IsHorizontal = true
 ```
+
+> **Ordering note:** `[]DataPoint` preserves the order you specify.
+> If you have a `map[string]float64` and alphabetical order is acceptable,
+> use `rptgen.DataPointsFromMap(m)` as a convenience converter.
 
 #### `LineChart`
 
@@ -227,21 +265,23 @@ Line chart with one or more named series.
 
 Each `LineSeries` has:
 
-| Field    | Type                 | Description              |
-|----------|----------------------|--------------------------|
-| `Name`   | `string`             | Series label in legend.  |
-| `Points` | `map[string]float64` | Label → value pairs.     |
+| Field    | Type            | Description                                                 |
+|----------|-----------------|-------------------------------------------------------------|
+| `Name`   | `string`        | Series label in legend.                                     |
+| `Points` | `[]DataPoint`   | Ordered label-value pairs. Axis order matches slice order.  |
 
 ```go
 // Single series
-chart := rptgen.NewLineChartSingle("Monthly Revenue", map[string]float64{
-    "Jan": 45000, "Feb": 52000, "Mar": 48000,
+chart := rptgen.NewLineChartSingle("Monthly Revenue", []rptgen.DataPoint{
+    {Label: "January", Value: 45000},
+    {Label: "February", Value: 52000},
+    {Label: "March", Value: 48000},
 })
 
 // Multiple series
 chart := rptgen.NewLineChart("Revenue vs Costs", []rptgen.LineSeries{
-    {Name: "Revenue", Points: map[string]float64{"Q1": 145000, "Q2": 174000}},
-    {Name: "Costs",   Points: map[string]float64{"Q1": 95000,  "Q2": 102000}},
+    {Name: "Revenue", Points: []rptgen.DataPoint{{Label: "Q1", Value: 145000}, {Label: "Q2", Value: 174000}}},
+    {Name: "Costs",   Points: []rptgen.DataPoint{{Label: "Q1", Value: 95000},  {Label: "Q2", Value: 102000}}},
 })
 ```
 
@@ -249,18 +289,18 @@ chart := rptgen.NewLineChart("Revenue vs Costs", []rptgen.LineSeries{
 
 Pie or donut chart.
 
-| Field     | Type                 | Description                              |
-|-----------|----------------------|------------------------------------------|
-| `Title`   | `string`             | Chart heading.                           |
-| `Data`    | `map[string]float64` | Label → value pairs.                     |
-| `IsDonut` | `bool`               | Render as donut (hollow center) if `true`. |
-| `Tooltip` | `string`             | Hover text on the chart card.            |
+| Field     | Type            | Description                                                    |
+|-----------|-----------------|----------------------------------------------------------------|
+| `Title`   | `string`        | Chart heading.                                                 |
+| `Data`    | `[]DataPoint`   | Ordered label-value pairs. Legend order matches slice order.   |
+| `IsDonut` | `bool`          | Render as donut (hollow center) if `true`.                     |
+| `Tooltip` | `string`        | Hover text on the chart card.                                  |
 
 ```go
-chart := rptgen.NewPieChart("Product Mix", map[string]float64{
-    "Enterprise":   45,
-    "Professional": 30,
-    "Starter":      25,
+chart := rptgen.NewPieChart("Product Mix", []rptgen.DataPoint{
+    {Label: "Enterprise",   Value: 45},
+    {Label: "Professional", Value: 30},
+    {Label: "Starter",      Value: 25},
 })
 chart.IsDonut = true
 ```
@@ -290,6 +330,55 @@ chart := rptgen.NewStackedBarChart("Quarterly Performance", []rptgen.StackedBarS
 })
 ```
 
+#### `ScatterChart`
+
+Scatter plot where each point is an independent `{X, Y}` coordinate pair.
+
+| Field    | Type             | Description                          |
+|----------|------------------|--------------------------------------|
+| `Title`  | `string`         | Chart heading.                       |
+| `Points` | `[]ScatterPoint` | Ordered slice of `{X, Y}` points.   |
+| `Tooltip`| `string`         | Hover text on the chart card.        |
+
+```go
+chart := rptgen.NewScatterChart("Correlation", []rptgen.ScatterPoint{
+    {X: 1.2, Y: 3.4},
+    {X: 2.5, Y: 5.1},
+    {X: 3.7, Y: 4.8},
+})
+```
+
+### Common Chart Options
+
+Every chart type embeds `ChartBase`, which carries an `Options ChartOptions` field.
+`ChartOptions` exposes the Chart.js options that are common across all chart types.
+Zero values preserve Chart.js defaults — existing charts require no changes.
+
+| Field            | Type      | Default    | Description                                                                                   |
+|------------------|-----------|------------|-----------------------------------------------------------------------------------------------|
+| `LegendPosition` | `string`  | `""`       | `"top"`, `"bottom"`, `"left"`, `"right"`, or `"none"` (hides legend). Empty = chart default. |
+| `XAxisTitle`     | `string`  | `""`       | Label for the X axis. Ignored for non-cartesian charts (pie, doughnut).                       |
+| `YAxisTitle`     | `string`  | `""`       | Label for the Y axis. Ignored for non-cartesian charts.                                       |
+| `YMin`           | `*float64`| `nil`      | Clamp the value-axis minimum. For horizontal bars, applied to the X (value) axis.            |
+| `YMax`           | `*float64`| `nil`      | Clamp the value-axis maximum. For horizontal bars, applied to the X (value) axis.            |
+| `ShowTooltips`   | `*bool`   | `nil`      | Set to `false` to disable Chart.js data-point tooltips. Nil = Chart.js default (enabled).   |
+| `AspectRatio`    | `*float64`| `nil`      | Width-to-height ratio. Nil uses the per-chart-type default (2.0 for most types).            |
+| `ShowChartTitle` | `bool`    | `false`    | Emit a Chart.js native title block inside the canvas (in addition to the HTML `<h3>`).       |
+
+All future chart types (021–027) inherit these options automatically through `ChartBase`.
+
+```go
+falseVal := false
+chart := rptgen.NewBarChart("Revenue by Month", data)
+chart.Options.LegendPosition = "bottom"
+chart.Options.XAxisTitle = "Month"
+chart.Options.YAxisTitle = "USD"
+chart.Options.YMin = func() *float64 { v := 0.0; return &v }()
+chart.Options.ShowTooltips = &falseVal
+chart.Options.AspectRatio = func() *float64 { v := 3.0; return &v }()
+chart.Options.ShowChartTitle = true
+```
+
 ## Theming
 
 `Theme` controls the visual appearance of the rendered report.
@@ -299,37 +388,67 @@ theme := rptgen.DefaultTheme()
 theme.PrimaryColor   = "#059669" // override specific fields
 theme.FontFamily     = "Georgia, serif"
 
-html, err := rptgen.HtmlRenderer{}.Render(report, theme)
+err = rptgen.HtmlRenderer{}.Render(f, report, theme)
 ```
 
 Pass `nil` as the theme to use `DefaultTheme()` with no overrides.
 
-| Field             | Type       | Default                      | Description                                 |
-|-------------------|------------|------------------------------|---------------------------------------------|
-| `PrimaryColor`    | `string`   | `#2563eb`                    | Headings, accents.                          |
-| `SecondaryColor`  | `string`   | `#64748b`                    | Secondary text and borders.                 |
-| `BackgroundColor` | `string`   | `#ffffff`                    | Page background.                            |
-| `TextColor`       | `string`   | `#1e293b`                    | Body text.                                  |
-| `AccentColor`     | `string`   | `#10b981`                    | Highlight elements.                         |
-| `FontFamily`      | `string`   | System UI stack              | CSS `font-family` value.                    |
-| `BorderRadius`    | `string`   | `0.5rem`                     | Card corner radius.                         |
-| `ChartColors`     | `[]string` | Eight-color palette          | Colors cycled through chart series.         |
-| `ShadowIntensity` | `string`   | `"medium"`                   | `"none"`, `"subtle"`, `"medium"`, `"strong"`. |
-| `EnableAnimations`| `bool`     | `true`                       | CSS entry animations on cards.              |
-| `EnableGradients` | `bool`     | `false`                      | Gradient fills on chart bars.               |
+| Field             | Type       | Default                      | Description                                                         |
+|-------------------|------------|------------------------------|---------------------------------------------------------------------|
+| `PrimaryColor`    | `string`   | `#2563eb`                    | Headings, accents.                                                  |
+| `SecondaryColor`  | `string`   | `#64748b`                    | Secondary text and borders.                                         |
+| `BackgroundColor` | `string`   | `#f1f5f9`                    | Page background.                                                    |
+| `CardColor`       | `string`   | `#ffffff`                    | Element card/tile background.                                       |
+| `TextColor`       | `string`   | `#1e293b`                    | Body text.                                                          |
+| `AccentColor`     | `string`   | `#10b981`                    | Tooltip icon color. Also available to custom elements via `HTMLRenderContext.Theme`. |
+| `FontFamily`      | `string`   | System UI stack              | CSS `font-family` value.                                            |
+| `BorderRadius`    | `string`   | `0.5rem`                     | Card corner radius.                                                 |
+| `ChartColors`     | `[]string` | Eight-color palette          | Colors cycled through chart series.                                 |
+| `ShadowIntensity` | `string`   | `"medium"`                   | `"none"`, `"subtle"`, `"medium"`, `"strong"`.                      |
+| `EnableAnimations`| `bool`     | `true`                       | CSS entry animations on cards.                                      |
+| `EnableGradients` | `bool`     | `false`                      | Adds a linear gradient to the report header background.             |
 
 ## Renderer
 
 `HtmlRenderer` is the built-in renderer. It produces a fully self-contained HTML document — all CSS and Chart.js JavaScript are embedded inline.
 
 ```go
-html, err := rptgen.HtmlRenderer{}.Render(report, theme)
+f, err := os.Create("report.html")
+if err != nil {
+    log.Fatal(err)
+}
+defer f.Close()
+err = rptgen.HtmlRenderer{}.Render(f, report, theme)
 ```
 
-Custom renderers can be implemented by satisfying the `Renderer` interface:
+For cases where a string is more convenient (tests, in-memory use), use `RenderString`:
+
+```go
+html, err := rptgen.HtmlRenderer{}.RenderString(report, theme)
+```
+
+### Custom elements
+
+Any type that implements the `HTMLRenderer` interface is renderable by `HtmlRenderer`
+without modifying the library. Implement `RenderHTML` to return the HTML fragment and
+any Chart.js initialisation scripts for your element:
+
+```go
+type HTMLRenderer interface {
+    RenderHTML(ctx *HTMLRenderContext) (html string, scripts []string, err error)
+}
+```
+
+`HTMLRenderContext` exposes the active `*Theme`, `NextID` for stable canvas IDs, and
+`ChartColors` for the colour palette.
+
+### Custom document renderers
+
+To produce output in a format other than HTML (e.g. Markdown, PDF), implement the
+`Renderer` interface:
 
 ```go
 type Renderer interface {
-    Render(report *Report, theme *Theme) (string, error)
+    Render(w io.Writer, report *Report, theme *Theme) error
 }
 ```

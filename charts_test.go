@@ -3,7 +3,7 @@ package rptgen
 import "testing"
 
 func TestNewLineChartSingle(t *testing.T) {
-	pts := map[string]float64{"Jan": 10, "Feb": 20}
+	pts := []DataPoint{{Label: "Jan", Value: 10}, {Label: "Feb", Value: 20}}
 	lc := NewLineChartSingle("Sales", pts)
 
 	if lc.Title != "Sales" {
@@ -25,8 +25,8 @@ func TestNewLineChartSingle(t *testing.T) {
 
 func TestNewLineChart(t *testing.T) {
 	series := []LineSeries{
-		{Name: "A", Points: map[string]float64{"Q1": 1}},
-		{Name: "B", Points: map[string]float64{"Q1": 2}},
+		{Name: "A", Points: []DataPoint{{Label: "Q1", Value: 1}}},
+		{Name: "B", Points: []DataPoint{{Label: "Q1", Value: 2}}},
 	}
 	lc := NewLineChart("Trends", series)
 
@@ -43,11 +43,11 @@ func TestElementTypeStrings(t *testing.T) {
 		elem Element
 		want string
 	}{
-		{&NumberTile{BaseElement: newBaseElement()}, "NumberTile"},
-		{&DateTile{BaseElement: newBaseElement()}, "DateTile"},
-		{&FreeText{BaseElement: newBaseElement()}, "FreeText"},
-		{&Table{BaseElement: newBaseElement()}, "Table"},
-		{&Canvas{BaseElement: newBaseElement()}, "Canvas"},
+		{&NumberTile{}, "NumberTile"},
+		{&DateTile{}, "DateTile"},
+		{&FreeText{}, "FreeText"},
+		{&Table{}, "Table"},
+		{&Canvas{}, "Canvas"},
 		{NewBarChart("", nil), "BarChart"},
 		{NewLineChart("", nil), "LineChart"},
 		{NewPieChart("", nil), "PieChart"},
@@ -57,6 +57,23 @@ func TestElementTypeStrings(t *testing.T) {
 		got := tc.elem.ElementType()
 		if got != tc.want {
 			t.Errorf("%T.ElementType(): got %q, want %q", tc.elem, got, tc.want)
+		}
+	}
+}
+
+func TestDataPointsFromMap(t *testing.T) {
+	m := map[string]float64{"Mar": 3, "Jan": 1, "Feb": 2}
+	pts := DataPointsFromMap(m)
+	wantLabels := []string{"Feb", "Jan", "Mar"}
+	if len(pts) != len(wantLabels) {
+		t.Fatalf("len: got %d, want %d", len(pts), len(wantLabels))
+	}
+	for i, lbl := range wantLabels {
+		if pts[i].Label != lbl {
+			t.Errorf("pts[%d].Label: got %q, want %q", i, pts[i].Label, lbl)
+		}
+		if pts[i].Value != m[lbl] {
+			t.Errorf("pts[%d].Value: got %v, want %v", i, pts[i].Value, m[lbl])
 		}
 	}
 }

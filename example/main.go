@@ -14,26 +14,26 @@ const (
 
 func main() {
 	// Sample data — simulating data extracted from an API
-	salesByRegion := map[string]float64{
-		"North America": 125000,
-		"Europe":        98000,
-		"Asia Pacific":  142000,
-		"Latin America": 67000,
+	salesByRegion := []rptgen.DataPoint{
+		{Label: "Asia Pacific", Value: 142000},
+		{Label: "North America", Value: 125000},
+		{Label: "Europe", Value: 98000},
+		{Label: "Latin America", Value: 67000},
 	}
 
-	monthlyRevenue := map[string]float64{
-		"January":  45000,
-		"February": 52000,
-		"March":    48000,
-		"April":    55000,
-		"May":      61000,
-		"June":     58000,
+	monthlyRevenue := []rptgen.DataPoint{
+		{Label: "January", Value: 45000},
+		{Label: "February", Value: 52000},
+		{Label: "March", Value: 48000},
+		{Label: "April", Value: 55000},
+		{Label: "May", Value: 61000},
+		{Label: "June", Value: 58000},
 	}
 
-	productMix := map[string]float64{
-		"Enterprise":   45,
-		"Professional": 30,
-		"Starter":      25,
+	productMix := []rptgen.DataPoint{
+		{Label: "Enterprise", Value: 45},
+		{Label: "Professional", Value: 30},
+		{Label: "Starter", Value: 25},
 	}
 
 	quarterlyGrowth := []rptgen.StackedBarSeries{
@@ -54,72 +54,67 @@ func main() {
 	report.Footer = "Confidential - Internal Use Only"
 
 	// Section: Key Metrics
-	kpis := &rptgen.Section{Title: "Key Metrics", ColumnWidths: rptgen.EqualColumns(4)}
-	kpis.AddElement(&rptgen.NumberTile{
-		Title:        "Total Revenue",
-		Value:        432000,
-		Format:       "%.0f",
-		Prefix:       "$ ",
-		ThousandsSep: true,
-		Tooltip:      "Total revenue from all regions and product lines for Q2 2024",
-	})
-	kpis.AddElement(&rptgen.NumberTile{
-		Title:   "New Customers",
-		Value:   47,
-		Format:  "%.0f",
-		Tooltip: "Number of new customer accounts opened during this quarter",
-	})
-	kpis.AddElement(&rptgen.NumberTile{
-		Title:    "Growth Rate",
-		Value:    19.8,
-		Format:   "%.1f%%",
-		Subtitle: "↑ vs Q1",
-		Tooltip:  "Year-over-year growth compared to the same quarter last year",
-	})
-	kpis.AddElement(&rptgen.NumberTile{
-		Title:    "Customer Satisfaction",
-		Value:    4.7,
-		Format:   "%.1f",
-		Subtitle: "out of 5.0",
-	})
+	kpis := rptgen.NewSection("Key Metrics", rptgen.EqualColumns(4)...)
+
+	revenue := rptgen.NewNumberTile("Total Revenue", 432000)
+	revenue.Format = "%.0f"
+	revenue.Prefix = "$ "
+	revenue.ThousandsSep = true
+	revenue.Tooltip = "Total revenue from all regions and product lines for Q2 2024"
+	kpis.AddElement(revenue)
+
+	customers := rptgen.NewNumberTile("New Customers", 47)
+	customers.Format = "%.0f"
+	customers.Tooltip = "Number of new customer accounts opened during this quarter"
+	kpis.AddElement(customers)
+
+	growth := rptgen.NewNumberTile("Growth Rate", 19.8)
+	growth.Format = "%.1f%%"
+	growth.Subtitle = "↑ vs Q1"
+	growth.Tooltip = "Year-over-year growth compared to the same quarter last year"
+	kpis.AddElement(growth)
+
+	satisfaction := rptgen.NewNumberTile("Customer Satisfaction", 4.7)
+	satisfaction.Format = "%.1f"
+	satisfaction.Subtitle = "out of 5.0"
+	kpis.AddElement(satisfaction)
+
 	report.AddSection(kpis)
 
 	// Section: Timeline
-	timeline := &rptgen.Section{Title: "Timeline", ColumnWidths: []int{1, 1, 1}}
-	timeline.AddElement(&rptgen.DateTile{
-		Title:  "Quarter Start",
-		Value:  time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC),
-		Format: dateFormat,
-	})
-	timeline.AddElement(&rptgen.DateTile{
-		Title:  "Quarter End",
-		Value:  time.Date(2024, 6, 30, 0, 0, 0, 0, time.UTC),
-		Format: dateFormat,
-	})
-	timeline.AddElement(&rptgen.DateTile{
-		Title:    "Report Generated",
-		Value:    time.Date(2024, 7, 15, 14, 30, 0, 0, time.UTC),
-		Format:   "2006-01-02 15:04",
-		Subtitle: "Generated date",
-	})
+	timeline := rptgen.NewSection("Timeline", 1, 1, 1)
+
+	qStart := rptgen.NewDateTile("Quarter Start", time.Date(2024, 4, 1, 0, 0, 0, 0, time.UTC))
+	qStart.Format = dateFormat
+	timeline.AddElement(qStart)
+
+	qEnd := rptgen.NewDateTile("Quarter End", time.Date(2024, 6, 30, 0, 0, 0, 0, time.UTC))
+	qEnd.Format = dateFormat
+	timeline.AddElement(qEnd)
+
+	generated := rptgen.NewDateTile("Report Generated", time.Date(2024, 7, 15, 14, 30, 0, 0, time.UTC))
+	generated.Format = "2006-01-02 15:04"
+	generated.Subtitle = "Generated date"
+	timeline.AddElement(generated)
+
 	report.AddSection(timeline)
 
 	// Section: Revenue Analysis
-	revenue := &rptgen.Section{Title: "Revenue Analysis", ColumnWidths: []int{1, 1}}
-	revenue.AddElement(func() rptgen.Element {
+	revenueSection := rptgen.NewSection("Revenue Analysis", 1, 1)
+	revenueSection.AddElement(func() rptgen.Element {
 		c := rptgen.NewBarChart("Revenue by Region", salesByRegion)
 		c.Tooltip = "Revenue distribution across our four main geographic markets for Q2 2024"
 		return c
 	}())
-	revenue.AddElement(func() rptgen.Element {
+	revenueSection.AddElement(func() rptgen.Element {
 		c := rptgen.NewLineChartSingle("Monthly Revenue Trend", monthlyRevenue)
 		c.Tooltip = "Month-over-month revenue progression showing steady growth throughout the quarter"
 		return c
 	}())
-	report.AddSection(revenue)
+	report.AddSection(revenueSection)
 
 	// Section: Product & Growth
-	productGrowth := &rptgen.Section{Title: "Product & Growth", ColumnWidths: []int{1, 1}}
+	productGrowth := rptgen.NewSection("Product & Growth", 1, 1)
 	productGrowth.AddElement(func() rptgen.Element {
 		c := rptgen.NewPieChart("Product Mix (%)", productMix)
 		c.IsDonut = true
@@ -134,50 +129,49 @@ func main() {
 	report.AddSection(productGrowth)
 
 	// Section: Top Customers
-	customers := &rptgen.Section{Title: "Top Customers"}
-	customers.AddElement(rptgen.NewTableWithColumns(
+	topCustomersSection := rptgen.NewSection("Top Customers")
+	topCustomersSection.AddElement(rptgen.NewTableWithColumns(
 		"Q2 Top Revenue Contributors",
 		topCustomers,
 		[]string{"Customer", "Revenue", "Status"},
 	))
-	report.AddSection(customers)
+	report.AddSection(topCustomersSection)
 
 	// Section: Canvas Example - Mixed Layout (2:1 ratio)
-	canvasSection := &rptgen.Section{Title: "Canvas Example - Mixed Layout", ColumnWidths: []int{3, 2}}
+	canvasSection := rptgen.NewSection("Canvas Example - Mixed Layout", 3, 2)
 	canvas := rptgen.NewCanvas(1, 3)
-	canvas.AddElement(&rptgen.NumberTile{
-		Title:    "Canvas Demo",
-		Value:    100,
-		Format:   "%.0f",
-		Subtitle: "This is in a canvas!",
-	})
-	canvas.AddElement(rptgen.NewBarChart("Sample Chart", map[string]float64{"A": 10, "B": 20, "C": 15}))
-	canvas.AddElement(&rptgen.NumberTile{Title: "Another Tile", Value: 42, Format: "%.0f"})
-	canvas.AddElement(&rptgen.DateTile{
-		Title:  "Today",
-		Value:  time.Now(),
-		Format: dateFormat,
-	})
+
+	canvasTile := rptgen.NewNumberTile("Canvas Demo", 100)
+	canvasTile.Format = "%.0f"
+	canvasTile.Subtitle = "This is in a canvas!"
+	canvas.AddElement(canvasTile)
+
+	canvas.AddElement(rptgen.NewBarChart("Sample Chart", []rptgen.DataPoint{{Label: "A", Value: 10}, {Label: "B", Value: 20}, {Label: "C", Value: 15}}))
+
+	canvas.AddElement(rptgen.NewNumberTile("Another Tile", 42))
+
+	today := rptgen.NewDateTile("Today", time.Now())
+	today.Format = dateFormat
+	canvas.AddElement(today)
+
 	canvasSection.AddElement(canvas)
 	canvasSection.AddElement(func() rptgen.Element {
-		c := rptgen.NewPieChart("Sample Pie", map[string]float64{"X": 30, "Y": 40, "Z": 30})
+		c := rptgen.NewPieChart("Sample Pie", []rptgen.DataPoint{{Label: "X", Value: 30}, {Label: "Y", Value: 40}, {Label: "Z", Value: 30}})
 		c.IsDonut = true
 		return c
 	}())
 	report.AddSection(canvasSection)
 
 	// Section: Summary
-	summary := &rptgen.Section{Title: "Summary"}
-	summary.AddElement(&rptgen.FreeText{
-		Content: `Q2 2024 showed strong performance across all regions with total revenue of $432,000, representing a 19.8% increase over Q1. Asia Pacific continues to be our strongest market, while Latin America presents significant growth opportunities.
+	summary := rptgen.NewSection("Summary")
+	summary.AddElement(rptgen.NewFreeText(`Q2 2024 showed strong performance across all regions with total revenue of $432,000, representing a 19.8% increase over Q1. Asia Pacific continues to be our strongest market, while Latin America presents significant growth opportunities.
 
 The Enterprise product tier dominates our revenue mix at 45%, indicating strong traction in the high-value segment. Customer satisfaction remains high at 4.7/5.0.
 
 Key focus areas for Q3:
 • Expand sales team in Latin America
 • Launch new features for Professional tier
-• Increase customer retention initiatives`,
-	})
+• Increase customer retention initiatives`))
 	report.AddSection(summary)
 
 	// Render default theme
@@ -194,11 +188,15 @@ Key focus areas for Q3:
 }
 
 func write(path string, report *rptgen.Report, theme *rptgen.Theme) {
-	html, err := rptgen.HtmlRenderer{}.Render(report, theme)
+	f, err := os.Create(path)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := os.WriteFile(path, []byte(html), 0644); err != nil {
+	err = rptgen.HtmlRenderer{}.Render(f, report, theme)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err = f.Close(); err != nil {
 		log.Fatal(err)
 	}
 	log.Printf("wrote %s", path)

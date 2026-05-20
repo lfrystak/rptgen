@@ -10,17 +10,27 @@ import (
 
 // NumberTile displays a single numeric metric.
 type NumberTile struct {
-	BaseElement
-	Title        string
-	Value        float64
-	Format       string // fmt.Sprintf format, e.g. "%.2f", "%.0f", "%.1f%%". Empty = raw float.
+	Title  string
+	Value  float64
+	Format string // fmt.Sprintf format for a float64, e.g. "%.2f", "%.0f", "%.1f%%". Empty = raw decimal.
+	// Only float verbs produce valid output (f, F, e, E, g, G, x, X, b); other verbs cause fmt to emit
+	// its %!verb(...) error sentinel, which FormatValue surfaces verbatim so the problem is visible.
 	Prefix       string // prepended to the formatted value, e.g. "$", "€"
-	ThousandsSep bool   // insert comma thousands separator into the integer part
+	ThousandsSep bool   // insert comma thousands separator; only effective with decimal (f/F-verb) formats
 	Subtitle     string
 	Tooltip      string
 }
 
 func (n *NumberTile) ElementType() string { return "NumberTile" }
+
+// NewNumberTile returns a NumberTile with the given title and value.
+// Optional display fields (Format, Prefix, ThousandsSep, Subtitle, Tooltip) can be set on the returned pointer.
+func NewNumberTile(title string, value float64) *NumberTile {
+	return &NumberTile{
+		Title: title,
+		Value: value,
+	}
+}
 
 func (n *NumberTile) FormatValue() string {
 	var s string
@@ -28,14 +38,35 @@ func (n *NumberTile) FormatValue() string {
 		s = strconv.FormatFloat(n.Value, 'f', -1, 64)
 	} else {
 		s = fmt.Sprintf(n.Format, n.Value)
+		// Surface fmt's %! error sentinel immediately; further processing would only mangle it.
+		if strings.Contains(s, "%!") {
+			return s
+		}
 	}
-	if n.ThousandsSep {
+	if n.ThousandsSep && isDecimalOutput(s) {
 		s = addThousandsSep(s)
 	}
 	if n.Prefix != "" {
 		s = n.Prefix + s
 	}
 	return s
+}
+
+// isDecimalOutput reports whether s looks like a plain decimal number (optional leading minus,
+// digits, optional dot + digits, optional trailing percent). Only such strings are safe to pass
+// to addThousandsSep; scientific, hex, and other non-decimal fmt outputs are not.
+func isDecimalOutput(s string) bool {
+	trimmed := strings.TrimSuffix(s, "%")
+	trimmed = strings.TrimPrefix(trimmed, "-")
+	if trimmed == "" {
+		return false
+	}
+	for _, ch := range trimmed {
+		if (ch < '0' || ch > '9') && ch != '.' {
+			return false
+		}
+	}
+	return true
 }
 
 // addThousandsSep inserts comma thousands separators into the integer part of a formatted number string.
@@ -66,7 +97,6 @@ func addThousandsSep(s string) string {
 
 // DateTile displays a date or datetime metric.
 type DateTile struct {
-	BaseElement
 	Title    string
 	Value    time.Time // zero value = not set
 	Format   string    // Go time layout string, e.g. "2006-01-02". Empty = "2006-01-02 15:04:05"
@@ -75,6 +105,15 @@ type DateTile struct {
 }
 
 func (d *DateTile) ElementType() string { return "DateTile" }
+
+// NewDateTile returns a DateTile with the given title and time value.
+// Optional display fields (Format, Subtitle, Tooltip) can be set on the returned pointer.
+func NewDateTile(title string, value time.Time) *DateTile {
+	return &DateTile{
+		Title: title,
+		Value: value,
+	}
+}
 
 func (d *DateTile) FormatValue() string {
 	if d.Value.IsZero() {
@@ -89,16 +128,23 @@ func (d *DateTile) FormatValue() string {
 
 // FreeText displays a block of text or raw HTML.
 type FreeText struct {
-	BaseElement
 	Content string
-	IsHTML  bool // if true, Content is rendered as raw HTML (not escaped)
+	// SECURITY: when IsHTML is true, Content is injected verbatim into the document without
+	// any escaping. The caller is responsible for ensuring the value is safe HTML — i.e. it
+	// must be sanitized before being passed here if it originates from untrusted input.
+	IsHTML bool
 }
 
 func (f *FreeText) ElementType() string { return "FreeText" }
 
+// NewFreeText returns a FreeText element with the given plain-text content.
+// Set IsHTML = true on the returned pointer to inject Content as raw HTML (caller must ensure it is safe).
+func NewFreeText(content string) *FreeText {
+	return &FreeText{Content: content}
+}
+
 // Table displays tabular data.
 type Table struct {
-	BaseElement
 	Title   string
 	Columns []string         // ordered column names
 	Rows    []map[string]any // each row maps column name to value
@@ -116,26 +162,24 @@ func NewTable(title string, rows []map[string]any) *Table {
 		sort.Strings(cols)
 	}
 	return &Table{
-		BaseElement: newBaseElement(),
-		Title:       title,
-		Columns:     cols,
-		Rows:        rows,
+		Title:   title,
+		Columns: cols,
+		Rows:    rows,
 	}
 }
 
 // NewTableWithColumns uses the provided column order explicitly.
 func NewTableWithColumns(title string, rows []map[string]any, columns []string) *Table {
 	return &Table{
-		BaseElement: newBaseElement(),
-		Title:       title,
-		Columns:     columns,
-		Rows:        rows,
+		Title:   title,
+		Columns: columns,
+		Rows:    rows,
 	}
 }
 
 // NewTableFromColumns converts column-oriented data to row-oriented.
-// Panics if column slices have different lengths.
-func NewTableFromColumns(title string, columns map[string][]any) *Table {
+// Returns an error if column slices have different lengths.
+func NewTableFromColumns(title string, columns map[string][]any) (*Table, error) {
 	rowCount := -1
 	colNames := make([]string, 0, len(columns))
 	for name, vals := range columns {
@@ -143,7 +187,7 @@ func NewTableFromColumns(title string, columns map[string][]any) *Table {
 		if rowCount == -1 {
 			rowCount = len(vals)
 		} else if len(vals) != rowCount {
-			panic("rptgen: NewTableFromColumns: column slices have different lengths")
+			return nil, fmt.Errorf("rptgen: NewTableFromColumns: column slices have different lengths")
 		}
 	}
 	sort.Strings(colNames)
@@ -160,16 +204,16 @@ func NewTableFromColumns(title string, columns map[string][]any) *Table {
 	}
 
 	return &Table{
-		BaseElement: newBaseElement(),
-		Title:       title,
-		Columns:     colNames,
-		Rows:        rows,
-	}
+		Title:   title,
+		Columns: colNames,
+		Rows:    rows,
+	}, nil
 }
 
-// Canvas is a flexible sub-grid container that holds other elements.
+// Canvas is a nestable sub-grid element that can be placed inside a Section column.
+// It uses the same proportional ColumnWidths semantics as Section, but unlike Section
+// it is itself an Element and can be nested at any depth.
 type Canvas struct {
-	BaseElement
 	ColumnWidths []int
 	Elements     []Element
 }
@@ -185,7 +229,6 @@ func (c *Canvas) AddElement(e Element) *Canvas {
 // NewCanvas returns a Canvas with the given proportional column widths.
 func NewCanvas(columnWidths ...int) *Canvas {
 	return &Canvas{
-		BaseElement:  newBaseElement(),
 		ColumnWidths: columnWidths,
 	}
 }

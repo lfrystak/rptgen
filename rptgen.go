@@ -1,6 +1,7 @@
 package rptgen
 
 import (
+	"io"
 	"time"
 )
 
@@ -9,18 +10,15 @@ type Element interface {
 	ElementType() string
 }
 
-// BaseElement is embedded by all concrete element types.
-type BaseElement struct{}
-
-func newBaseElement() BaseElement { return BaseElement{} }
-
 // Report is the top-level document container.
 type Report struct {
 	Title       string
+	Lang        string // BCP-47 language tag for the HTML lang attribute, e.g. "en", "de". Defaults to "en".
 	Sections    []*Section
 	GeneratedAt time.Time
 	Footer      string
 	LogoURL     string
+	LogoAlt     string // alt text for the logo image; defaults to "<Title> logo" when empty.
 }
 
 // NewReport returns a Report with GeneratedAt set to the current time.
@@ -38,13 +36,25 @@ func (r *Report) AddSection(s *Section) *Report {
 	return r
 }
 
-// Section groups elements into a layout row.
-// ColumnWidths holds proportional widths (e.g. [1,2] = 33%/67%).
-// Nil or empty means a single column.
+// Section groups elements into a layout row within a Report.
+// ColumnWidths holds proportional widths (e.g. [1,2] = 33%/67%); nil or empty = single column.
+//
+// Section is a top-level row managed by Report and is not itself an Element.
+// Use Canvas when you need a nestable sub-grid element that sits inside a Section column.
 type Section struct {
 	Title        string
 	Elements     []Element
 	ColumnWidths []int
+}
+
+// NewSection returns a Section with the given title and optional proportional column widths.
+// NewSection("Stats", 1, 2) creates a section with a 33%/67% two-column grid.
+// Omit columnWidths (or pass none) for a single-column layout.
+func NewSection(title string, columnWidths ...int) *Section {
+	return &Section{
+		Title:        title,
+		ColumnWidths: columnWidths,
+	}
 }
 
 // AddElement appends e to the section and returns s for optional chaining.
@@ -69,16 +79,16 @@ func EqualColumns(n int) []int {
 // Theme controls the visual appearance of a rendered report.
 // Empty string fields mean "use default"; HtmlRenderer applies defaults at render time.
 type Theme struct {
-	PrimaryColor    string
-	SecondaryColor  string
-	BackgroundColor string // page/body background
-	CardColor       string // element card/tile background
-	TextColor       string
-	AccentColor     string
-	FontFamily      string
-	BorderRadius    string
-	ChartColors     []string
-	ShadowIntensity string // "none"|"subtle"|"medium"|"strong"
+	PrimaryColor     string
+	SecondaryColor   string
+	BackgroundColor  string // page/body background
+	CardColor        string // element card/tile background
+	TextColor        string
+	AccentColor      string
+	FontFamily       string
+	BorderRadius     string
+	ChartColors      []string
+	ShadowIntensity  string // "none"|"subtle"|"medium"|"strong"
 	EnableAnimations bool
 	EnableGradients  bool
 }
@@ -99,8 +109,40 @@ func DefaultTheme() *Theme {
 	}
 }
 
+// HTMLRenderContext is the rendering environment HtmlRenderer passes to each Element.
+// Elements that implement HTMLRenderer receive this value and use it to produce
+// their HTML fragment and any Chart.js initialisation scripts.
+type HTMLRenderContext struct {
+	Theme        *Theme
+	SectionTitle string
+	idGen        *idGen
+}
+
+// NextID returns a stable, unique HTML element ID for a chart canvas with the given
+// title within the current section. Call it once per chart element.
+func (ctx *HTMLRenderContext) NextID(elementTitle string) string {
+	return ctx.idGen.next(ctx.SectionTitle, elementTitle)
+}
+
+// ChartColors returns the active color palette: the theme's ChartColors when set,
+// otherwise the package defaults. Custom chart elements use this to colour datasets.
+func (ctx *HTMLRenderContext) ChartColors() []string {
+	return chartColors(ctx.Theme)
+}
+
+// HTMLRenderer is the render-dispatch interface for HTML output.
+// Implement it on any Element to make that element renderable by HtmlRenderer
+// without modifying the central dispatch function.
+//
+// RenderHTML returns the HTML fragment for the element and any Chart.js
+// initialisation scripts to be injected at the bottom of the document.
+// Return a non-nil error to propagate a render failure to the caller.
+type HTMLRenderer interface {
+	RenderHTML(ctx *HTMLRenderContext) (html string, scripts []string, err error)
+}
+
 // Renderer generates a report document from a Report and an optional Theme.
 // Implementations must call DefaultTheme() when theme is nil.
 type Renderer interface {
-	Render(report *Report, theme *Theme) (string, error)
+	Render(w io.Writer, report *Report, theme *Theme) error
 }

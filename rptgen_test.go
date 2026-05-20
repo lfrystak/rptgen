@@ -1,6 +1,7 @@
 package rptgen
 
 import (
+	"os/exec"
 	"testing"
 	"time"
 )
@@ -27,6 +28,43 @@ func TestNewReport(t *testing.T) {
 	}
 }
 
+func TestNewSection(t *testing.T) {
+	t.Run("no column widths", func(t *testing.T) {
+		s := NewSection("Stats")
+		if s.Title != "Stats" {
+			t.Errorf("Title: got %q, want %q", s.Title, "Stats")
+		}
+		if len(s.ColumnWidths) != 0 {
+			t.Errorf("ColumnWidths: got %v, want empty", s.ColumnWidths)
+		}
+		if len(s.Elements) != 0 {
+			t.Errorf("Elements: got len %d, want 0", len(s.Elements))
+		}
+	})
+
+	t.Run("with column widths", func(t *testing.T) {
+		s := NewSection("Revenue", 1, 2)
+		if s.Title != "Revenue" {
+			t.Errorf("Title: got %q", s.Title)
+		}
+		if len(s.ColumnWidths) != 2 || s.ColumnWidths[0] != 1 || s.ColumnWidths[1] != 2 {
+			t.Errorf("ColumnWidths: got %v, want [1 2]", s.ColumnWidths)
+		}
+	})
+
+	t.Run("single column via EqualColumns", func(t *testing.T) {
+		s := NewSection("Kpis", EqualColumns(3)...)
+		if len(s.ColumnWidths) != 3 {
+			t.Errorf("ColumnWidths len: got %d, want 3", len(s.ColumnWidths))
+		}
+		for i, w := range s.ColumnWidths {
+			if w != 1 {
+				t.Errorf("ColumnWidths[%d]: got %d, want 1", i, w)
+			}
+		}
+	})
+}
+
 func TestAddSection(t *testing.T) {
 	r := NewReport("R")
 	s1 := &Section{Title: "S1"}
@@ -46,8 +84,8 @@ func TestAddSection(t *testing.T) {
 
 func TestSectionAddElement(t *testing.T) {
 	s := &Section{}
-	e1 := &NumberTile{BaseElement: newBaseElement(), Title: "A"}
-	e2 := &NumberTile{BaseElement: newBaseElement(), Title: "B"}
+	e1 := &NumberTile{Title: "A"}
+	e2 := &NumberTile{Title: "B"}
 
 	returned := s.AddElement(e1).AddElement(e2)
 	if returned != s {
@@ -61,24 +99,45 @@ func TestSectionAddElement(t *testing.T) {
 	}
 }
 
+// TestDefaultTheme guards against drift between DefaultTheme() and the values
+// documented in README.md. Update this test whenever you change DefaultTheme().
 func TestDefaultTheme(t *testing.T) {
 	th := DefaultTheme()
 
-	if th.PrimaryColor != "#2563eb" {
-		t.Errorf("PrimaryColor: got %q", th.PrimaryColor)
+	want := map[string]string{
+		"PrimaryColor":    "#2563eb",
+		"SecondaryColor":  "#64748b",
+		"BackgroundColor": "#f1f5f9",
+		"CardColor":       "#ffffff",
+		"TextColor":       "#1e293b",
+		"AccentColor":     "#10b981",
+		"BorderRadius":    "0.5rem",
+		"ShadowIntensity": "medium",
 	}
-	if th.ShadowIntensity != "medium" {
-		t.Errorf("ShadowIntensity: got %q", th.ShadowIntensity)
+	got := map[string]string{
+		"PrimaryColor":    th.PrimaryColor,
+		"SecondaryColor":  th.SecondaryColor,
+		"BackgroundColor": th.BackgroundColor,
+		"CardColor":       th.CardColor,
+		"TextColor":       th.TextColor,
+		"AccentColor":     th.AccentColor,
+		"BorderRadius":    th.BorderRadius,
+		"ShadowIntensity": th.ShadowIntensity,
 	}
+	for field, wantVal := range want {
+		if got[field] != wantVal {
+			t.Errorf("DefaultTheme().%s: got %q, want %q (update README if intentional)", field, got[field], wantVal)
+		}
+	}
+
 	if !th.EnableAnimations {
-		t.Error("EnableAnimations must be true")
+		t.Error("DefaultTheme().EnableAnimations: got false, want true")
 	}
-	if th.BackgroundColor == "" {
-		t.Error("BackgroundColor must not be empty")
+	if th.EnableGradients {
+		t.Error("DefaultTheme().EnableGradients: got true, want false")
 	}
-	if th.TextColor == "" {
-		t.Error("TextColor must not be empty")
-	}
+	// ChartColors is intentionally nil in DefaultTheme; the built-in palette is
+	// applied at render time via chartColors(). README documents this as "Eight-color palette".
 }
 
 func TestEqualColumns(t *testing.T) {
@@ -103,6 +162,13 @@ func TestEqualColumns(t *testing.T) {
 				t.Errorf("EqualColumns(%d)[%d]: got %d, want 1", tc.n, i, v)
 			}
 		}
+	}
+}
+
+func TestExampleBuilds(t *testing.T) {
+	cmd := exec.Command("go", "build", "-o", "/dev/null", "./example/...")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("example/... failed to build: %v\n%s", err, out)
 	}
 }
 
