@@ -100,11 +100,23 @@ func (o chartOptions) MarshalJSON() ([]byte, error) {
 }
 
 type chartPlugins struct {
-	Legend *chartLegend `json:"legend,omitempty"`
+	Legend  *chartLegend  `json:"legend,omitempty"`
+	Title   *chartTitle   `json:"title,omitempty"`
+	Tooltip *chartTooltip `json:"tooltip,omitempty"`
 }
 
 type chartLegend struct {
-	Display bool `json:"display"`
+	Display  bool   `json:"display"`
+	Position string `json:"position,omitempty"`
+}
+
+type chartTitle struct {
+	Display bool   `json:"display"`
+	Text    string `json:"text,omitempty"`
+}
+
+type chartTooltip struct {
+	Enabled bool `json:"enabled"`
 }
 
 type chartScales struct {
@@ -113,5 +125,91 @@ type chartScales struct {
 }
 
 type chartAxis struct {
-	Stacked bool `json:"stacked,omitempty"`
+	Stacked bool            `json:"stacked,omitempty"`
+	Title   *chartAxisTitle `json:"title,omitempty"`
+	Min     *float64        `json:"min,omitempty"`
+	Max     *float64        `json:"max,omitempty"`
+}
+
+type chartAxisTitle struct {
+	Display bool   `json:"display"`
+	Text    string `json:"text,omitempty"`
+}
+
+// applyChartOptions merges user-visible ChartOptions into o.
+// title is the chart's title, used when opts.ShowChartTitle is true.
+// isCartesian must be true for bar, line, scatter, etc.; false for pie/doughnut.
+// isHorizontal must be true when the value axis is X (horizontal bar charts).
+func applyChartOptions(o *chartOptions, opts ChartOptions, title string, isCartesian, isHorizontal bool) {
+	if opts.AspectRatio != nil {
+		o.AspectRatio = opts.AspectRatio
+	}
+
+	needPlugins := opts.LegendPosition != "" || opts.ShowChartTitle || (opts.ShowTooltips != nil && !*opts.ShowTooltips)
+	if needPlugins && o.Plugins == nil {
+		o.Plugins = &chartPlugins{}
+	}
+
+	if opts.LegendPosition != "" {
+		if o.Plugins.Legend == nil {
+			o.Plugins.Legend = &chartLegend{Display: true}
+		}
+		if opts.LegendPosition == "none" {
+			o.Plugins.Legend.Display = false
+			o.Plugins.Legend.Position = ""
+		} else {
+			o.Plugins.Legend.Display = true
+			o.Plugins.Legend.Position = opts.LegendPosition
+		}
+	}
+
+	if opts.ShowChartTitle && title != "" {
+		o.Plugins.Title = &chartTitle{Display: true, Text: title}
+	}
+
+	if opts.ShowTooltips != nil && !*opts.ShowTooltips {
+		o.Plugins.Tooltip = &chartTooltip{Enabled: false}
+	}
+
+	if !isCartesian {
+		return
+	}
+
+	if opts.XAxisTitle != "" {
+		if o.Scales == nil {
+			o.Scales = &chartScales{}
+		}
+		if o.Scales.X == nil {
+			o.Scales.X = &chartAxis{}
+		}
+		o.Scales.X.Title = &chartAxisTitle{Display: true, Text: opts.XAxisTitle}
+	}
+	if opts.YAxisTitle != "" {
+		if o.Scales == nil {
+			o.Scales = &chartScales{}
+		}
+		if o.Scales.Y == nil {
+			o.Scales.Y = &chartAxis{}
+		}
+		o.Scales.Y.Title = &chartAxisTitle{Display: true, Text: opts.YAxisTitle}
+	}
+	if opts.YMin != nil || opts.YMax != nil {
+		if o.Scales == nil {
+			o.Scales = &chartScales{}
+		}
+		// Apply min/max to the value axis: Y for normal orientation, X for horizontal.
+		if isHorizontal {
+			if o.Scales.X == nil {
+				o.Scales.X = &chartAxis{}
+			}
+			o.Scales.X.Min = opts.YMin
+			o.Scales.X.Max = opts.YMax
+		} else {
+			if o.Scales.Y == nil {
+				o.Scales.Y = &chartAxis{}
+			}
+			o.Scales.Y.Min = opts.YMin
+			o.Scales.Y.Max = opts.YMax
+		}
+	}
 }

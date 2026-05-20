@@ -34,7 +34,7 @@ dependency on 001–019 (see each spec's **Dependencies** for coordination notes
 
 | ID | Title | Severity | Status |
 |----|-------|----------|--------|
-| [020](020-shared-chart-options.md) | No shared model for common Chart.js options across chart types | Important | 🔜 Not started |
+| [020](020-shared-chart-options.md) | No shared model for common Chart.js options across chart types | Important | ✅ Done |
 | [021](021-area-chart.md) | No area chart support | Nice-to-have | 🔜 Not started |
 | [022](022-grouped-bar-chart.md) | `BarChart` is single-series only; no grouped (multi-series) bar chart | Nice-to-have | 🔜 Not started |
 | [023](023-radar-chart.md) | No radar chart support | Nice-to-have | 🔜 Not started |

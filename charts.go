@@ -26,10 +26,53 @@ func DataPointsFromMap(m map[string]float64) []DataPoint {
 	return pts
 }
 
+// ChartOptions holds common Chart.js options shared by every chart type.
+// Zero values preserve Chart.js defaults — a chart with all-zero ChartOptions
+// produces identical output to one with no Options field set.
+//
+// Axis-related fields (XAxisTitle, YAxisTitle, YMin, YMax) are silently
+// ignored for non-cartesian charts (PieChart, any future polar/radial type).
+// For horizontal bar charts, YMin/YMax are applied to the value axis (X in
+// Chart.js terms); XAxisTitle and YAxisTitle always map to their literal axes.
+type ChartOptions struct {
+	// LegendPosition sets the legend placement.
+	// Accepted values: "top", "bottom", "left", "right".
+	// Use "none" to hide the legend entirely.
+	// Empty string (zero value) preserves the per-chart-type default.
+	LegendPosition string
+
+	// XAxisTitle sets the label for the X axis (cartesian charts only).
+	XAxisTitle string
+
+	// YAxisTitle sets the label for the Y axis (cartesian charts only).
+	// For horizontal bar charts this is the category axis; the value axis is X.
+	YAxisTitle string
+
+	// YMin and YMax clamp the value-axis range (cartesian charts only).
+	// For horizontal bar charts the value axis is X.
+	YMin *float64
+	YMax *float64
+
+	// ShowTooltips controls whether Chart.js data-point tooltips are shown.
+	// Nil preserves the Chart.js default (enabled).
+	// Set to a pointer to false to disable: opts.ShowTooltips = rptgen.BoolPtr(false)
+	ShowTooltips *bool
+
+	// AspectRatio overrides the chart's width-to-height ratio.
+	// Nil uses the per-chart-type default (2.0 for most built-in types).
+	AspectRatio *float64
+
+	// ShowChartTitle, when true, additionally emits a Chart.js native title
+	// block from ChartBase.Title, appearing inside the canvas area. The HTML
+	// <h3> heading above the chart card is always rendered regardless.
+	ShowChartTitle bool
+}
+
 // ChartBase is embedded by all chart types and holds common chart fields.
 type ChartBase struct {
 	Title   string
-	Tooltip string // optional hover tooltip on the chart card (not on data points)
+	Tooltip string       // optional hover tooltip on the chart card (not on data points)
+	Options ChartOptions // optional Chart.js display options; zero value = Chart.js defaults
 }
 
 // BarChart displays a single-series bar chart.
