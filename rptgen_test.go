@@ -52,17 +52,18 @@ func TestNewSection(t *testing.T) {
 		}
 	})
 
-	t.Run("single column via EqualColumns", func(t *testing.T) {
-		s := NewSection("Kpis", EqualColumns(3)...)
-		if len(s.ColumnWidths) != 3 {
-			t.Errorf("ColumnWidths len: got %d, want 3", len(s.ColumnWidths))
+}
+
+func TestNewSectionEqualColumns(t *testing.T) {
+	s := NewSection("Kpis", EqualColumns(3)...)
+	if len(s.ColumnWidths) != 3 {
+		t.Errorf("ColumnWidths len: got %d, want 3", len(s.ColumnWidths))
+	}
+	for i, w := range s.ColumnWidths {
+		if w != 1 {
+			t.Errorf("ColumnWidths[%d]: got %d, want 1", i, w)
 		}
-		for i, w := range s.ColumnWidths {
-			if w != 1 {
-				t.Errorf("ColumnWidths[%d]: got %d, want 1", i, w)
-			}
-		}
-	})
+	}
 }
 
 func TestAddSection(t *testing.T) {

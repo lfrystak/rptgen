@@ -85,6 +85,19 @@ func parseChartScript(t *testing.T, script string) chartConfig {
 	return cfg
 }
 
+// checkChartLabels asserts that got exactly matches want, reporting per-index diffs.
+func checkChartLabels(t *testing.T, got, want []string) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("Labels: got %v, want %v", got, want)
+	}
+	for i, lbl := range want {
+		if got[i] != lbl {
+			t.Errorf("Labels[%d]: got %q, want %q", i, got[i], lbl)
+		}
+	}
+}
+
 // customTestElement is a dummy Element that does NOT implement HTMLRenderer, used to
 // exercise the unknown-type error branch in renderElement.
 type customTestElement struct{}
@@ -501,15 +514,7 @@ func TestStackedBarChartScriptAxesAndOrder(t *testing.T) {
 		t.Errorf("Type: got %q, want bar", cfg.Type)
 	}
 	// categories in original Series slice order
-	wantLabels := []string{"Q1", "Q2"}
-	if len(cfg.Data.Labels) != len(wantLabels) {
-		t.Fatalf("Labels: got %v, want %v", cfg.Data.Labels, wantLabels)
-	}
-	for i, lbl := range wantLabels {
-		if cfg.Data.Labels[i] != lbl {
-			t.Errorf("Labels[%d]: got %q, want %q", i, cfg.Data.Labels[i], lbl)
-		}
-	}
+	checkChartLabels(t, cfg.Data.Labels, []string{"Q1", "Q2"})
 	if cfg.Options.Scales == nil {
 		t.Fatal("Scales must not be nil for stacked chart")
 	}
