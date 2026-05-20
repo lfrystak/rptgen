@@ -1,7 +1,7 @@
 package rptgen
 
 import (
-	_ "embed"
+	_ "embed" // required for go:embed directives below
 	"strings"
 	"text/template"
 )
