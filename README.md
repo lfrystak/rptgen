@@ -53,7 +53,7 @@ func main() {
         log.Fatal(err)
     }
     defer f.Close()
-    if err := rptgen.HtmlRenderer{}.Render(f, report, nil); err != nil { // nil = default theme
+    if err := (rptgen.HtmlRenderer{}).Render(f, report, nil); err != nil { // nil = default theme
         log.Fatal(err)
     }
 }
