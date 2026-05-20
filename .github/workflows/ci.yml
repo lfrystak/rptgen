@@ -73,6 +73,7 @@ jobs:
           -Dsonar.verbose=${{ inputs.sonar_verbose || false }}
           -Dsonar.sarifReportPaths=golangci-lint-sarif.json
           -Dsonar.coverage.exclusions=example/**/*.go
+          -Dsonar.cpd.exclusions=testdata/**
 
   compat:
     runs-on: ubuntu-latest
