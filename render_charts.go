@@ -1,8 +1,8 @@
 package rptgen
 
 import (
-  "fmt"
-  "sort"
+	"fmt"
+	"sort"
 )
 
 // RenderHTML implements HTMLRenderer for BarChart.
