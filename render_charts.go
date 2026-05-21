@@ -5,24 +5,21 @@ import (
 	"sort"
 )
 
-// RenderHTML implements HTMLRenderer for BarChart.
-func (e *BarChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
-	id := ctx.NextID(e.Title)
+func (e *BarChart) renderHTML(ctx *htmlRenderContext) (string, []string, error) {
+	id := ctx.nextID(e.Title)
 	script, err := renderBarChartScript(id, e, ctx.Theme)
 	if err != nil {
 		return "", nil, err
 	}
-	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
+	return renderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 }
 
-// RenderHTML implements HTMLRenderer for LineChart.
-// When XYSeries is populated (XY mode) the chart is rendered with a numeric X axis;
-// otherwise the categorical path (string labels) is used.
-func (e *LineChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
+// renderHTML for LineChart: uses a numeric X axis when XYSeries is set, string labels otherwise.
+func (e *LineChart) renderHTML(ctx *htmlRenderContext) (string, []string, error) {
 	if len(e.XYSeries) > 0 && len(e.Series) > 0 {
 		return "", nil, fmt.Errorf("LineChart %q: Series and XYSeries are mutually exclusive", e.Title)
 	}
-	id := ctx.NextID(e.Title)
+	id := ctx.nextID(e.Title)
 	var script string
 	var err error
 	if len(e.XYSeries) > 0 {
@@ -33,34 +30,29 @@ func (e *LineChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error)
 	if err != nil {
 		return "", nil, err
 	}
-	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
+	return renderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 }
 
-// RenderHTML implements HTMLRenderer for PieChart.
-func (e *PieChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
-	id := ctx.NextID(e.Title)
+func (e *PieChart) renderHTML(ctx *htmlRenderContext) (string, []string, error) {
+	id := ctx.nextID(e.Title)
 	script, err := renderPieChartScript(id, e, ctx.Theme)
 	if err != nil {
 		return "", nil, err
 	}
-	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
+	return renderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 }
 
-// RenderHTML implements HTMLRenderer for StackedBarChart.
-func (e *StackedBarChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
-	id := ctx.NextID(e.Title)
+func (e *StackedBarChart) renderHTML(ctx *htmlRenderContext) (string, []string, error) {
+	id := ctx.nextID(e.Title)
 	script, err := renderStackedBarChartScript(id, e, ctx.Theme)
 	if err != nil {
 		return "", nil, err
 	}
-	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
+	return renderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 }
 
-// RenderHTML implements HTMLRenderer for ScatterChart.
-// This is the acceptance test for spec 005: a new chart type supplies its own rendering
-// by implementing HTMLRenderer — no modification to renderElement required.
-func (e *ScatterChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
-	colors := ctx.ChartColors()
+func (e *ScatterChart) renderHTML(ctx *htmlRenderContext) (string, []string, error) {
+	colors := ctx.chartColors()
 	points := make([]xyPoint, len(e.Points))
 	for i, p := range e.Points {
 		points[i] = xyPoint(p)
@@ -78,12 +70,12 @@ func (e *ScatterChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, err
 		Options: chartOptions{Responsive: true, AspectRatio: &ratio},
 	}
 	applyChartOptions(&cfg.Options, e.Options, e.Title, true, false)
-	id := ctx.NextID(e.Title)
-	script, err := ChartInitScript(id, cfg)
+	id := ctx.nextID(e.Title)
+	script, err := chartInitScript(id, cfg)
 	if err != nil {
 		return "", nil, err
 	}
-	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
+	return renderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 }
 
 // --- Shared XY chart config ---
@@ -158,7 +150,7 @@ func renderBarChartScript(id string, e *BarChart, theme *Theme) (string, error) 
 		},
 	}
 	applyChartOptions(&cfg.Options, e.Options, e.Title, true, e.IsHorizontal)
-	return ChartInitScript(id, cfg)
+	return chartInitScript(id, cfg)
 }
 
 func renderLineChartScript(id string, e *LineChart, theme *Theme) (string, error) {
@@ -215,7 +207,7 @@ func renderLineChartScript(id string, e *LineChart, theme *Theme) (string, error
 		},
 	}
 	applyChartOptions(&cfg.Options, e.Options, e.Title, true, false)
-	return ChartInitScript(id, cfg)
+	return chartInitScript(id, cfg)
 }
 
 func renderPieChartScript(id string, e *PieChart, theme *Theme) (string, error) {
@@ -244,7 +236,7 @@ func renderPieChartScript(id string, e *PieChart, theme *Theme) (string, error) 
 		Options: chartOptions{Responsive: true, AspectRatio: &ratio},
 	}
 	applyChartOptions(&cfg.Options, e.Options, e.Title, false, false)
-	return ChartInitScript(id, cfg)
+	return chartInitScript(id, cfg)
 }
 
 func renderStackedBarChartScript(id string, e *StackedBarChart, theme *Theme) (string, error) {
@@ -299,7 +291,7 @@ func renderStackedBarChartScript(id string, e *StackedBarChart, theme *Theme) (s
 		},
 	}
 	applyChartOptions(&cfg.Options, e.Options, e.Title, true, e.IsHorizontal)
-	return ChartInitScript(id, cfg)
+	return chartInitScript(id, cfg)
 }
 
 // renderLineChartXYScript renders the XY mode of a LineChart: Chart.js type "line"
@@ -344,5 +336,5 @@ func renderLineChartXYScript(id string, e *LineChart, theme *Theme) (string, err
 		},
 	}
 	applyChartOptions(&cfg.Options, e.Options, e.Title, true, false)
-	return ChartInitScript(id, cfg)
+	return chartInitScript(id, cfg)
 }

@@ -219,9 +219,6 @@ type XYPoint struct {
 
 // ScatterChart displays a scatter plot. Each point is an independent {x, y} coordinate;
 // unlike bar/line charts there are no shared axis labels.
-//
-// ScatterChart is also the spec-005 acceptance-test element: it adds a new chart type
-// by implementing HTMLRenderer on its own struct without touching renderElement.
 type ScatterChart struct {
 	ChartBase
 	Points []XYPoint

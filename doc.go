@@ -47,16 +47,4 @@
 //	theme.PrimaryColor = "#059669"
 //	theme.FontFamily = "Georgia, serif"
 //	rptgen.HtmlRenderer{}.Render(w, report, theme)
-//
-// # Extending with custom elements
-//
-// Implement [HTMLRenderer] on any struct that also satisfies [Element] to add chart or
-// tile types without modifying library code:
-//
-//	type MyElement struct{ rptgen.ChartBase }
-//	func (m *MyElement) ElementType() string { return "MyElement" }
-//	func (m *MyElement) RenderHTML(ctx *rptgen.HTMLRenderContext) (string, []string, error) {
-//	    html := `<div class="element-card">hello</div>`
-//	    return html, nil, nil
-//	}
 package rptgen
