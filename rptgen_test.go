@@ -173,6 +173,32 @@ func TestExampleBuilds(t *testing.T) {
 	}
 }
 
+func TestPtr(t *testing.T) {
+	b := Ptr(false)
+	if b == nil {
+		t.Fatal("Ptr(false): got nil")
+	}
+	if *b != false {
+		t.Errorf("Ptr(false): got %v, want false", *b)
+	}
+
+	f := Ptr(3.14)
+	if f == nil {
+		t.Fatal("Ptr(3.14): got nil")
+	}
+	if *f != 3.14 {
+		t.Errorf("Ptr(3.14): got %v, want 3.14", *f)
+	}
+
+	s := Ptr("hello")
+	if s == nil {
+		t.Fatal("Ptr(\"hello\"): got nil")
+	}
+	if *s != "hello" {
+		t.Errorf("Ptr(\"hello\"): got %v, want \"hello\"", *s)
+	}
+}
+
 func TestColumnWidthsToCSS(t *testing.T) {
 	cases := []struct {
 		widths []int
