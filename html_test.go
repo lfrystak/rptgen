@@ -861,7 +861,7 @@ func TestCustomHTMLRendererElement(t *testing.T) {
 func TestScatterChartRenders(t *testing.T) {
 	r := NewReport("Scatter")
 	section := &Section{Title: "Metrics"}
-	section.AddElement(NewScatterChart("Points", []ScatterPoint{
+	section.AddElement(NewScatterChart("Points", []XYPoint{
 		{X: 1, Y: 2},
 		{X: 3, Y: 4},
 		{X: 5, Y: 6},
@@ -891,7 +891,7 @@ func TestScatterChartScript(t *testing.T) {
 		SectionTitle: "sec",
 		idGen:        gen,
 	}
-	chart := NewScatterChart("XY", []ScatterPoint{{X: 10, Y: 20}, {X: 30, Y: 40}})
+	chart := NewScatterChart("XY", []XYPoint{{X: 10, Y: 20}, {X: 30, Y: 40}})
 	_, scripts, err := chart.RenderHTML(ctx)
 	if err != nil {
 		t.Fatalf("RenderHTML: %v", err)
@@ -911,6 +911,168 @@ func TestScatterChartScript(t *testing.T) {
 	}
 	if !strings.Contains(script, `"y":20`) {
 		t.Errorf("script must contain y:20; got: %s", script)
+	}
+}
+
+// parseXYChartScript extracts and parses a Chart.js config that uses {x,y} point data
+// (xyChartConfig) from a ChartInitScript output. Use this for ScatterChart and XY-mode
+// LineChart tests; use parseChartScript for categorical line/bar/pie charts.
+func parseXYChartScript(t *testing.T, script string) xyChartConfig {
+	t.Helper()
+	const open = "new Chart(ctx,"
+	i := strings.Index(script, open)
+	if i < 0 {
+		t.Fatalf("parseXYChartScript: 'new Chart(ctx,' not found in: %s", script)
+	}
+	rest := script[i+len(open):]
+	j := strings.LastIndex(rest, ");})();")
+	if j < 0 {
+		t.Fatalf("parseXYChartScript: closing ');})();' not found")
+	}
+	var cfg xyChartConfig
+	if err := json.Unmarshal([]byte(rest[:j]), &cfg); err != nil {
+		t.Fatalf("parseXYChartScript: %v — JSON: %s", err, rest[:j])
+	}
+	return cfg
+}
+
+// --- XY-mode LineChart (NewLineChartXY) ---
+
+// TestLineChartXYScriptType verifies that NewLineChartXY emits Chart.js type "line".
+func TestLineChartXYScriptType(t *testing.T) {
+	lc := NewLineChartXY("Sin", []XYPoint{{X: 0, Y: 0}, {X: 1, Y: 1}})
+	script, err := renderLineChartXYScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartXYScript: %v", err)
+	}
+	cfg := parseXYChartScript(t, script)
+	if cfg.Type != "line" {
+		t.Errorf("Type: got %q, want line", cfg.Type)
+	}
+}
+
+// TestLineChartXYScriptLinearAxis verifies that the X axis scale type is "linear".
+func TestLineChartXYScriptLinearAxis(t *testing.T) {
+	lc := NewLineChartXY("Sin", []XYPoint{{X: 0, Y: 0}, {X: 1, Y: 1}})
+	script, err := renderLineChartXYScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartXYScript: %v", err)
+	}
+	if !strings.Contains(script, `"type":"linear"`) {
+		t.Errorf("script must contain scales.x.type linear; got: %s", script)
+	}
+}
+
+// TestLineChartXYScriptPoints verifies that point data is emitted as {x,y} objects.
+func TestLineChartXYScriptPoints(t *testing.T) {
+	lc := NewLineChartXY("F", []XYPoint{{X: 1.5, Y: 2.5}, {X: 3.0, Y: 4.0}})
+	script, err := renderLineChartXYScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartXYScript: %v", err)
+	}
+	cfg := parseXYChartScript(t, script)
+	if len(cfg.Data.Datasets) != 1 {
+		t.Fatalf("Datasets: got %d, want 1", len(cfg.Data.Datasets))
+	}
+	ds := cfg.Data.Datasets[0]
+	if len(ds.Data) != 2 {
+		t.Fatalf("Data points: got %d, want 2", len(ds.Data))
+	}
+	if ds.Data[0].X != 1.5 || ds.Data[0].Y != 2.5 {
+		t.Errorf("point[0]: got {%v,%v}, want {1.5,2.5}", ds.Data[0].X, ds.Data[0].Y)
+	}
+	if ds.Data[1].X != 3.0 || ds.Data[1].Y != 4.0 {
+		t.Errorf("point[1]: got {%v,%v}, want {3.0,4.0}", ds.Data[1].X, ds.Data[1].Y)
+	}
+}
+
+// TestLineChartXYScriptShowPointsFalse verifies that ShowPoints=false hides data-point dots.
+func TestLineChartXYScriptShowPointsFalse(t *testing.T) {
+	lc := NewLineChartXY("F", []XYPoint{{X: 0, Y: 0}})
+	lc.ShowPoints = false
+	script, err := renderLineChartXYScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartXYScript: %v", err)
+	}
+	cfg := parseXYChartScript(t, script)
+	if len(cfg.Data.Datasets) != 1 {
+		t.Fatalf("Datasets: got %d, want 1", len(cfg.Data.Datasets))
+	}
+	ds := cfg.Data.Datasets[0]
+	if ds.PointStyle == nil {
+		t.Fatal("PointStyle must be set when ShowPoints=false")
+	}
+	if *ds.PointStyle {
+		t.Error("PointStyle must be false when ShowPoints=false")
+	}
+}
+
+// TestLineChartXYScriptLegendSingleSeries verifies that a single-series XY chart
+// hides the legend by default (consistent with categorical single-series behaviour).
+func TestLineChartXYScriptLegendSingleSeries(t *testing.T) {
+	lc := NewLineChartXY("F", []XYPoint{{X: 0, Y: 1}})
+	script, err := renderLineChartXYScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartXYScript: %v", err)
+	}
+	cfg := parseXYChartScript(t, script)
+	if cfg.Options.Plugins == nil || cfg.Options.Plugins.Legend == nil {
+		t.Fatal("Plugins.Legend must be present")
+	}
+	if cfg.Options.Plugins.Legend.Display {
+		t.Error("Legend.Display must be false for single-series XY chart")
+	}
+}
+
+// TestLineChartXYScriptChartOptionsAxisTitles verifies that ChartOptions axis titles
+// are applied to XY-mode line charts and that the linear X axis type is preserved.
+func TestLineChartXYScriptChartOptionsAxisTitles(t *testing.T) {
+	lc := NewLineChartXY("Wave", []XYPoint{{X: 0, Y: 0}, {X: 1, Y: 1}})
+	lc.Options.XAxisTitle = "x (rad)"
+	lc.Options.YAxisTitle = "amplitude"
+
+	script, err := renderLineChartXYScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartXYScript: %v", err)
+	}
+	if !strings.Contains(script, `"x (rad)"`) {
+		t.Errorf("script must contain X axis title; got: %s", script)
+	}
+	if !strings.Contains(script, `"amplitude"`) {
+		t.Errorf("script must contain Y axis title; got: %s", script)
+	}
+	// The linear X axis type must survive ChartOptions application.
+	if !strings.Contains(script, `"type":"linear"`) {
+		t.Errorf("X axis type linear must be preserved after applying ChartOptions; got: %s", script)
+	}
+}
+
+// TestLineChartXYRenderHTMLDispatch verifies that LineChart.RenderHTML uses the XY
+// rendering path when XYSeries is populated, emitting type "line" with {x,y} data.
+func TestLineChartXYRenderHTMLDispatch(t *testing.T) {
+	lc := NewLineChartXY("Cos", []XYPoint{{X: 0, Y: 1}, {X: 3, Y: -1}})
+	gen := newIDGen()
+	ctx := &HTMLRenderContext{
+		Theme:        DefaultTheme(),
+		SectionTitle: "sec",
+		idGen:        gen,
+	}
+	_, scripts, err := lc.RenderHTML(ctx)
+	if err != nil {
+		t.Fatalf("RenderHTML: %v", err)
+	}
+	if len(scripts) != 1 {
+		t.Fatalf("expected 1 script, got %d", len(scripts))
+	}
+	script := scripts[0]
+	if !strings.Contains(script, `"type":"line"`) {
+		t.Errorf("XY line chart must emit type line; got: %s", script)
+	}
+	if !strings.Contains(script, `"type":"linear"`) {
+		t.Errorf("XY line chart must set X axis type linear; got: %s", script)
+	}
+	if !strings.Contains(script, `"x":0`) {
+		t.Errorf("XY line chart must contain x:0; got: %s", script)
 	}
 }
 
