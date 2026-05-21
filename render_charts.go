@@ -1,6 +1,9 @@
 package rptgen
 
-import "sort"
+import (
+  "fmt"
+  "sort"
+)
 
 // RenderHTML implements HTMLRenderer for BarChart.
 func (e *BarChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
@@ -16,6 +19,9 @@ func (e *BarChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) 
 // When XYSeries is populated (XY mode) the chart is rendered with a numeric X axis;
 // otherwise the categorical path (string labels) is used.
 func (e *LineChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
+	if len(e.XYSeries) > 0 && len(e.Series) > 0 {
+		return "", nil, fmt.Errorf("LineChart %q: Series and XYSeries are mutually exclusive", e.Title)
+	}
 	id := ctx.NextID(e.Title)
 	var script string
 	var err error
