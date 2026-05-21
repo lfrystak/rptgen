@@ -47,5 +47,4 @@
 //	theme.PrimaryColor = "#059669"
 //	theme.FontFamily = "Georgia, serif"
 //	rptgen.HtmlRenderer{}.Render(w, report, theme)
-//
 package rptgen
