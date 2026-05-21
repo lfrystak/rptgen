@@ -125,6 +125,7 @@ type chartScales struct {
 }
 
 type chartAxis struct {
+	Type    string          `json:"type,omitempty"` // e.g. "linear" for numeric XY axes
 	Stacked bool            `json:"stacked,omitempty"`
 	Title   *chartAxisTitle `json:"title,omitempty"`
 	Min     *float64        `json:"min,omitempty"`

@@ -13,9 +13,17 @@ func (e *BarChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) 
 }
 
 // RenderHTML implements HTMLRenderer for LineChart.
+// When XYSeries is populated (XY mode) the chart is rendered with a numeric X axis;
+// otherwise the categorical path (string labels) is used.
 func (e *LineChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
 	id := ctx.NextID(e.Title)
-	script, err := renderLineChartScript(id, e, ctx.Theme)
+	var script string
+	var err error
+	if len(e.XYSeries) > 0 {
+		script, err = renderLineChartXYScript(id, e, ctx.Theme)
+	} else {
+		script, err = renderLineChartScript(id, e, ctx.Theme)
+	}
 	if err != nil {
 		return "", nil, err
 	}
@@ -47,15 +55,15 @@ func (e *StackedBarChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, 
 // by implementing HTMLRenderer — no modification to renderElement required.
 func (e *ScatterChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
 	colors := ctx.ChartColors()
-	points := make([]scatterPoint, len(e.Points))
+	points := make([]xyPoint, len(e.Points))
 	for i, p := range e.Points {
-		points[i] = scatterPoint(p)
+		points[i] = xyPoint(p)
 	}
 	ratio := 2.0
-	cfg := scatterConfig{
+	cfg := xyChartConfig{
 		Type: "scatter",
-		Data: scatterData{
-			Datasets: []scatterDataset{{
+		Data: xyChartData{
+			Datasets: []xyDataset{{
 				Label:           e.Title,
 				Data:            points,
 				BackgroundColor: colors[0],
@@ -72,25 +80,43 @@ func (e *ScatterChart) RenderHTML(ctx *HTMLRenderContext) (string, []string, err
 	return RenderChartContainer(id, e.Title, e.Tooltip), []string{script}, nil
 }
 
-// scatterConfig is ScatterChart's own Chart.js config. It uses a different data shape
-// ({x,y} objects instead of flat float64 slices) and must not reuse chartConfig.
-type scatterConfig struct {
+// --- Shared XY chart config ---
+//
+// Chart.js scatter and line charts share the same dataset structure: both accept
+// {x,y} point objects and support the same dataset properties (borderColor, tension,
+// showLine, pointStyle, etc.). By default, scatter overrides showLine to false while
+// line charts always draw the connecting line.
+//
+// xyChartConfig, xyChartData, xyDataset, and xyPoint are used by both ScatterChart
+// and the XY mode of LineChart so that this shared foundation is reflected in the
+// library's internal representation.
+
+type xyChartConfig struct {
 	Type    string       `json:"type"`
-	Data    scatterData  `json:"data"`
+	Data    xyChartData  `json:"data"`
 	Options chartOptions `json:"options"`
 }
 
-type scatterData struct {
-	Datasets []scatterDataset `json:"datasets"`
+type xyChartData struct {
+	Datasets []xyDataset `json:"datasets"`
 }
 
-type scatterDataset struct {
-	Label           string         `json:"label,omitempty"`
-	Data            []scatterPoint `json:"data"`
-	BackgroundColor string         `json:"backgroundColor,omitempty"`
+// xyDataset mirrors the Chart.js dataset properties shared by scatter and line charts.
+// Fields that are not needed for a given chart type are left at their zero value and
+// omitted from the JSON output.
+type xyDataset struct {
+	Label           string    `json:"label,omitempty"`
+	Data            []xyPoint `json:"data"`
+	BackgroundColor string    `json:"backgroundColor,omitempty"`
+	BorderColor     string    `json:"borderColor,omitempty"`
+	Fill            *bool     `json:"fill,omitempty"`
+	Tension         *float64  `json:"tension,omitempty"`
+	PointStyle      *bool     `json:"pointStyle,omitempty"`
 }
 
-type scatterPoint struct {
+// xyPoint is the internal JSON representation of a Chart.js {x,y} data point.
+// It maps directly to the public ScatterPoint type.
+type xyPoint struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`
 }
@@ -267,5 +293,50 @@ func renderStackedBarChartScript(id string, e *StackedBarChart, theme *Theme) (s
 		},
 	}
 	applyChartOptions(&cfg.Options, e.Options, e.Title, true, e.IsHorizontal)
+	return ChartInitScript(id, cfg)
+}
+
+// renderLineChartXYScript renders the XY mode of a LineChart: Chart.js type "line"
+// with a linear X axis so that points are positioned by their numeric X value rather
+// than treated as evenly-spaced categories.
+func renderLineChartXYScript(id string, e *LineChart, theme *Theme) (string, error) {
+	colors := chartColors(theme)
+	falseVal := false
+	tension := 0.4
+
+	datasets := make([]xyDataset, len(e.XYSeries))
+	for i, s := range e.XYSeries {
+		points := make([]xyPoint, len(s.Points))
+		for j, p := range s.Points {
+			points[j] = xyPoint(p)
+		}
+		color := colors[i%len(colors)]
+		ds := xyDataset{
+			Label:           s.Name,
+			Data:            points,
+			BackgroundColor: color,
+			BorderColor:     color,
+			Fill:            &falseVal,
+			Tension:         &tension,
+		}
+		if !e.ShowPoints {
+			pointFalse := false
+			ds.PointStyle = &pointFalse
+		}
+		datasets[i] = ds
+	}
+
+	ratio := 2.0
+	cfg := xyChartConfig{
+		Type: "line",
+		Data: xyChartData{Datasets: datasets},
+		Options: chartOptions{
+			Responsive:  true,
+			AspectRatio: &ratio,
+			Scales:      &chartScales{X: &chartAxis{Type: "linear"}},
+			Plugins:     &chartPlugins{Legend: &chartLegend{Display: len(e.XYSeries) > 1}},
+		},
+	}
+	applyChartOptions(&cfg.Options, e.Options, e.Title, true, false)
 	return ChartInitScript(id, cfg)
 }

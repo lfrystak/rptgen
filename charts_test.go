@@ -38,6 +38,30 @@ func TestNewLineChart(t *testing.T) {
 	}
 }
 
+func TestNewLineChartXY(t *testing.T) {
+	pts := []ScatterPoint{{X: 0.0, Y: 0.0}, {X: 1.0, Y: 1.0}, {X: 2.0, Y: 4.0}}
+	lc := NewLineChartXY("Parabola", pts)
+
+	if lc.Title != "Parabola" {
+		t.Errorf("Title: got %q, want Parabola", lc.Title)
+	}
+	if len(lc.XYSeries) != 1 {
+		t.Fatalf("XYSeries: got len %d, want 1", len(lc.XYSeries))
+	}
+	if lc.XYSeries[0].Name != "Parabola" {
+		t.Errorf("XYSeries[0].Name: got %q, want Parabola", lc.XYSeries[0].Name)
+	}
+	if len(lc.XYSeries[0].Points) != 3 {
+		t.Errorf("XYSeries[0].Points: got len %d, want 3", len(lc.XYSeries[0].Points))
+	}
+	if len(lc.Series) != 0 {
+		t.Errorf("Series must be empty in XY mode, got len %d", len(lc.Series))
+	}
+	if !lc.ShowPoints {
+		t.Error("ShowPoints must be true by default")
+	}
+}
+
 func TestElementTypeStrings(t *testing.T) {
 	cases := []struct {
 		elem Element
@@ -50,8 +74,10 @@ func TestElementTypeStrings(t *testing.T) {
 		{&Canvas{}, "Canvas"},
 		{NewBarChart("", nil), "BarChart"},
 		{NewLineChart("", nil), "LineChart"},
+		{NewLineChartXY("", nil), "LineChart"},
 		{NewPieChart("", nil), "PieChart"},
 		{NewStackedBarChart("", nil), "StackedBarChart"},
+		{NewScatterChart("", nil), "ScatterChart"},
 	}
 	for _, tc := range cases {
 		got := tc.elem.ElementType()

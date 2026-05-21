@@ -92,24 +92,49 @@ func NewBarChart(title string, data []DataPoint) *BarChart {
 	}
 }
 
-// LineSeries holds a named data series for a LineChart.
+// LineSeries holds a named data series for a LineChart in categorical mode.
 // Points is a slice to preserve the caller's insertion order on the chart axis.
 type LineSeries struct {
 	Name   string
 	Points []DataPoint
 }
 
+// XYLineSeries holds a named data series of numeric X/Y points for a LineChart
+// in XY mode (created with [NewLineChartXY]). Unlike [LineSeries], the X axis
+// is linear so point spacing reflects actual X values rather than category order.
+type XYLineSeries struct {
+	Name   string
+	Points []ScatterPoint
+}
+
 // LineChart displays a line chart with one or more series.
-// Series is a slice to guarantee deterministic rendering order.
+//
+// A LineChart operates in one of two mutually exclusive modes determined by the
+// constructor used:
+//
+//   - Categorical mode ([NewLineChart], [NewLineChartSingle]): X axis labels are
+//     strings. Points are spaced evenly regardless of their numeric value. Use
+//     this for named categories such as months, quarters, or product names.
+//
+//   - XY mode ([NewLineChartXY]): X axis is numeric (linear). Points are
+//     positioned proportionally to their X value, so uneven sampling is
+//     rendered correctly. Use this for mathematical functions, sensor readings,
+//     or any data where X is a continuous number.
+//
+// Both modes honour all [ChartOptions] (axis titles, legend, tooltips, aspect
+// ratio, etc.) and emit a Chart.js "line" chart under the hood.
+// [ScatterChart] remains the right choice when you want individual data points
+// without a connecting line.
 type LineChart struct {
 	ChartBase
-	Series     []LineSeries
-	ShowPoints bool // default: true
+	Series     []LineSeries   // categorical mode: string labels on X axis
+	XYSeries   []XYLineSeries // XY mode: numeric X axis; mutually exclusive with Series
+	ShowPoints bool           // default: true
 }
 
 func (l *LineChart) ElementType() string { return "LineChart" }
 
-// NewLineChart creates a multi-series line chart.
+// NewLineChart creates a multi-series line chart with categorical string labels on the X axis.
 func NewLineChart(title string, series []LineSeries) *LineChart {
 	return &LineChart{
 		ChartBase:  ChartBase{Title: title},
@@ -118,11 +143,30 @@ func NewLineChart(title string, series []LineSeries) *LineChart {
 	}
 }
 
-// NewLineChartSingle wraps a single data series, using the chart title as the series name.
+// NewLineChartSingle creates a single-series line chart with categorical string labels on the X axis.
+// The chart title is used as the series name.
 func NewLineChartSingle(title string, points []DataPoint) *LineChart {
 	return &LineChart{
 		ChartBase:  ChartBase{Title: title},
 		Series:     []LineSeries{{Name: title, Points: points}},
+		ShowPoints: true,
+	}
+}
+
+// NewLineChartXY creates a single-series line chart with a numeric (linear) X axis.
+// Use this instead of [NewLineChartSingle] when X values are floats rather than
+// category labels — for example when plotting mathematical functions or continuous
+// measurements. Points are positioned proportionally to their X value, so uneven
+// sampling is rendered correctly.
+//
+// Internally the chart uses Chart.js type "line" with scales.x.type "linear".
+// This is the same engine as the categorical LineChart but with a numeric axis.
+// [ScatterChart] (dots only, no connecting line) remains the right choice when
+// you want to show individual data points without a line.
+func NewLineChartXY(title string, points []ScatterPoint) *LineChart {
+	return &LineChart{
+		ChartBase:  ChartBase{Title: title},
+		XYSeries:   []XYLineSeries{{Name: title, Points: points}},
 		ShowPoints: true,
 	}
 }
