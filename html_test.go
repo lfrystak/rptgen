@@ -98,20 +98,18 @@ func checkChartLabels(t *testing.T, got, want []string) {
 	}
 }
 
-// customTestElement is a dummy Element that does NOT implement HTMLRenderer, used to
+// customTestElement is a dummy Element that does NOT implement htmlRenderer, used to
 // exercise the unknown-type error branch in renderElement.
 type customTestElement struct{}
 
 func (c *customTestElement) ElementType() string { return "CustomTestElement" }
 
-// greenBoxElement is a custom Element that implements HTMLRenderer directly.
-// It is used to verify that external element types can participate in HtmlRenderer
-// without modifying renderElement.
+// greenBoxElement is a test Element that implements htmlRenderer directly.
 type greenBoxElement struct{}
 
 func (g *greenBoxElement) ElementType() string { return "GreenBox" }
 
-func (g *greenBoxElement) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
+func (g *greenBoxElement) renderHTML(_ *htmlRenderContext) (string, []string, error) {
 	return "          <div class=\"element\" style=\"background:green\">custom</div>\n", nil, nil
 }
 
@@ -807,11 +805,9 @@ func TestRenderElementUnknownType(t *testing.T) {
 	}
 }
 
-// --- ChartInitScript error path ---
-
 func TestChartInitScriptMarshalError(t *testing.T) {
 	// channels are not JSON-marshalable; this exercises the propagated error path.
-	_, err := ChartInitScript("id", make(chan int))
+	_, err := chartInitScript("id", make(chan int))
 	if err == nil {
 		t.Fatal("expected error for unmarshalable config, got nil")
 	}
@@ -836,11 +832,8 @@ func TestTableNonStringAnyCell(t *testing.T) {
 	}
 }
 
-// --- spec 005: open element interface / HTMLRenderer ---
-
-// TestCustomHTMLRendererElement verifies that an element type defined outside the
-// package (simulated here in the test file) renders correctly via HtmlRenderer once
-// it implements HTMLRenderer — without any modification to renderElement.
+// TestCustomHTMLRendererElement verifies that an element type defined in the test file
+// renders correctly via HtmlRenderer once it implements htmlRenderer.
 func TestCustomHTMLRendererElement(t *testing.T) {
 	r := NewReport("Custom")
 	section := &Section{}
@@ -883,18 +876,18 @@ func TestScatterChartRenders(t *testing.T) {
 	}
 }
 
-// TestScatterChartScript validates the Chart.js JSON shape produced by ScatterChart.RenderHTML.
+// TestScatterChartScript validates the Chart.js JSON shape produced by ScatterChart.renderHTML.
 func TestScatterChartScript(t *testing.T) {
 	gen := newIDGen()
-	ctx := &HTMLRenderContext{
+	ctx := &htmlRenderContext{
 		Theme:        DefaultTheme(),
 		SectionTitle: "sec",
 		idGen:        gen,
 	}
 	chart := NewScatterChart("XY", []XYPoint{{X: 10, Y: 20}, {X: 30, Y: 40}})
-	_, scripts, err := chart.RenderHTML(ctx)
+	_, scripts, err := chart.renderHTML(ctx)
 	if err != nil {
-		t.Fatalf("RenderHTML: %v", err)
+		t.Fatalf("renderHTML: %v", err)
 	}
 	if len(scripts) != 1 {
 		t.Fatalf("expected 1 script, got %d", len(scripts))
@@ -915,7 +908,7 @@ func TestScatterChartScript(t *testing.T) {
 }
 
 // parseXYChartScript extracts and parses a Chart.js config that uses {x,y} point data
-// (xyChartConfig) from a ChartInitScript output. Use this for ScatterChart and XY-mode
+// (xyChartConfig) from a chartInitScript output. Use this for ScatterChart and XY-mode
 // LineChart tests; use parseChartScript for categorical line/bar/pie charts.
 func parseXYChartScript(t *testing.T, script string) xyChartConfig {
 	t.Helper()
@@ -1047,19 +1040,19 @@ func TestLineChartXYScriptChartOptionsAxisTitles(t *testing.T) {
 	}
 }
 
-// TestLineChartXYRenderHTMLDispatch verifies that LineChart.RenderHTML uses the XY
+// TestLineChartXYRenderHTMLDispatch verifies that LineChart.renderHTML uses the XY
 // rendering path when XYSeries is populated, emitting type "line" with {x,y} data.
 func TestLineChartXYRenderHTMLDispatch(t *testing.T) {
 	lc := NewLineChartXY("Cos", []XYPoint{{X: 0, Y: 1}, {X: 3, Y: -1}})
 	gen := newIDGen()
-	ctx := &HTMLRenderContext{
+	ctx := &htmlRenderContext{
 		Theme:        DefaultTheme(),
 		SectionTitle: "sec",
 		idGen:        gen,
 	}
-	_, scripts, err := lc.RenderHTML(ctx)
+	_, scripts, err := lc.renderHTML(ctx)
 	if err != nil {
-		t.Fatalf("RenderHTML: %v", err)
+		t.Fatalf("renderHTML: %v", err)
 	}
 	if len(scripts) != 1 {
 		t.Fatalf("expected 1 script, got %d", len(scripts))
@@ -1076,16 +1069,16 @@ func TestLineChartXYRenderHTMLDispatch(t *testing.T) {
 	}
 }
 
-// TestHTMLRenderContextNextID verifies the exported NextID helper used by custom elements.
+// TestHTMLRenderContextNextID verifies the nextID helper.
 func TestHTMLRenderContextNextID(t *testing.T) {
 	gen := newIDGen()
-	ctx := &HTMLRenderContext{
+	ctx := &htmlRenderContext{
 		Theme:        DefaultTheme(),
 		SectionTitle: "My Section",
 		idGen:        gen,
 	}
-	id1 := ctx.NextID("Sales Chart")
-	id2 := ctx.NextID("Sales Chart") // collision → suffix
+	id1 := ctx.nextID("Sales Chart")
+	id2 := ctx.nextID("Sales Chart") // collision → suffix
 	if id1 != "my-section-sales-chart" {
 		t.Errorf("first ID: got %q, want my-section-sales-chart", id1)
 	}
@@ -1094,10 +1087,10 @@ func TestHTMLRenderContextNextID(t *testing.T) {
 	}
 }
 
-// TestHTMLRenderContextChartColors verifies that ChartColors falls back to defaults.
+// TestHTMLRenderContextChartColors verifies that chartColors falls back to defaults.
 func TestHTMLRenderContextChartColors(t *testing.T) {
-	ctx := &HTMLRenderContext{Theme: &Theme{}}
-	colors := ctx.ChartColors()
+	ctx := &htmlRenderContext{Theme: &Theme{}}
+	colors := ctx.chartColors()
 	if len(colors) == 0 {
 		t.Fatal("ChartColors must return at least one color")
 	}

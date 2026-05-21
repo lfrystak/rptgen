@@ -8,23 +8,21 @@ import (
 
 const closingDiv = "          </div>\n"
 
-// renderElement dispatches to the element's own RenderHTML implementation.
-// Any Element that does not implement HTMLRenderer returns an error.
-func renderElement(elem Element, ctx *HTMLRenderContext) (string, []string, error) {
-	hr, ok := elem.(HTMLRenderer)
+// renderElement dispatches to the element's own renderHTML implementation.
+// Any Element that does not implement htmlRenderer returns an error.
+func renderElement(elem Element, ctx *htmlRenderContext) (string, []string, error) {
+	hr, ok := elem.(htmlRenderer)
 	if !ok {
 		return "", nil, fmt.Errorf("rptgen: unknown element type %q", elem.ElementType())
 	}
-	return hr.RenderHTML(ctx)
+	return hr.renderHTML(ctx)
 }
 
-// RenderHTML implements HTMLRenderer for NumberTile.
-func (e *NumberTile) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
+func (e *NumberTile) renderHTML(_ *htmlRenderContext) (string, []string, error) {
 	return renderTileHTML("number-tile", e.Tooltip, e.Title, e.FormatValue(), e.Subtitle), nil, nil
 }
 
-// RenderHTML implements HTMLRenderer for DateTile.
-func (e *DateTile) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
+func (e *DateTile) renderHTML(_ *htmlRenderContext) (string, []string, error) {
 	return renderTileHTML("date-tile", e.Tooltip, e.Title, e.FormatValue(), e.Subtitle), nil, nil
 }
 
@@ -41,8 +39,7 @@ func renderTileHTML(cssClass, tooltip, title, value, subtitle string) string {
 	return b.String()
 }
 
-// RenderHTML implements HTMLRenderer for FreeText.
-func (e *FreeText) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
+func (e *FreeText) renderHTML(_ *htmlRenderContext) (string, []string, error) {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element free-text\">\n")
 	if e.IsHTML {
@@ -56,8 +53,7 @@ func (e *FreeText) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	return b.String(), nil, nil
 }
 
-// RenderHTML implements HTMLRenderer for Table.
-func (e *Table) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
+func (e *Table) renderHTML(_ *htmlRenderContext) (string, []string, error) {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element table-wrapper\">\n")
 	b.WriteString("            <table>\n")
@@ -84,8 +80,7 @@ func (e *Table) RenderHTML(_ *HTMLRenderContext) (string, []string, error) {
 	return b.String(), nil, nil
 }
 
-// RenderHTML implements HTMLRenderer for Canvas.
-func (e *Canvas) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
+func (e *Canvas) renderHTML(ctx *htmlRenderContext) (string, []string, error) {
 	colTemplate := columnWidthsToCSS(e.ColumnWidths)
 	var b strings.Builder
 	var allScripts []string
@@ -104,10 +99,7 @@ func (e *Canvas) RenderHTML(ctx *HTMLRenderContext) (string, []string, error) {
 	return b.String(), allScripts, nil
 }
 
-// RenderChartContainer returns the HTML card wrapper for a Chart.js canvas element.
-// Custom chart elements call this to produce the standard chart card HTML, then supply
-// the chart init script separately.
-func RenderChartContainer(id, title, tooltip string) string {
+func renderChartContainer(id, title, tooltip string) string {
 	var b strings.Builder
 	b.WriteString("          <div class=\"element chart-container\">\n")
 	b.WriteString(tooltipIcon(tooltip))

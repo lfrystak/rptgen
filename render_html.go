@@ -139,7 +139,7 @@ func renderSectionHTML(section *Section, theme *Theme, gen *idGen) (string, []st
 	var b strings.Builder
 	var scripts []string
 
-	ctx := &HTMLRenderContext{
+	ctx := &htmlRenderContext{
 		Theme:        theme,
 		SectionTitle: section.Title,
 		idGen:        gen,
