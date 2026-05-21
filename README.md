@@ -254,7 +254,10 @@ chart.IsHorizontal = true
 
 #### `LineChart`
 
-Line chart with one or more named series.
+Line chart that operates in one of two mutually exclusive modes depending on the constructor used.
+
+**Categorical mode** — X axis labels are strings, spaced evenly regardless of their numeric value.
+Use this for named categories such as months, quarters, or product names.
 
 | Field        | Type           | Description                                         |
 |--------------|----------------|-----------------------------------------------------|
@@ -271,19 +274,54 @@ Each `LineSeries` has:
 | `Points` | `[]DataPoint`   | Ordered label-value pairs. Axis order matches slice order.  |
 
 ```go
-// Single series
+// Single series (categorical)
 chart := rptgen.NewLineChartSingle("Monthly Revenue", []rptgen.DataPoint{
     {Label: "January", Value: 45000},
     {Label: "February", Value: 52000},
     {Label: "March", Value: 48000},
 })
 
-// Multiple series
+// Multiple series (categorical)
 chart := rptgen.NewLineChart("Revenue vs Costs", []rptgen.LineSeries{
     {Name: "Revenue", Points: []rptgen.DataPoint{{Label: "Q1", Value: 145000}, {Label: "Q2", Value: 174000}}},
     {Name: "Costs",   Points: []rptgen.DataPoint{{Label: "Q1", Value: 95000},  {Label: "Q2", Value: 102000}}},
 })
 ```
+
+**XY mode** — X axis is numeric (linear). Points are positioned by their actual X value, so
+uneven sampling is rendered correctly. Use this for mathematical functions, sensor readings,
+or any data where X is a continuous number.
+
+| Field        | Type             | Description                                           |
+|--------------|------------------|-------------------------------------------------------|
+| `Title`      | `string`         | Chart heading.                                        |
+| `XYSeries`   | `[]XYLineSeries` | Ordered slice of series (preserves legend order).     |
+| `ShowPoints` | `bool`           | Show data point dots. Default: `true`.                |
+| `Tooltip`    | `string`         | Hover text on the chart card.                         |
+
+Each `XYLineSeries` has:
+
+| Field    | Type              | Description                             |
+|----------|-------------------|-----------------------------------------|
+| `Name`   | `string`          | Series label in legend.                 |
+| `Points` | `[]ScatterPoint`  | Ordered `{X, Y}` coordinate pairs.     |
+
+```go
+// Single series (XY / numeric axis)
+chart := rptgen.NewLineChartXY("Sin Wave", []rptgen.ScatterPoint{
+    {X: 0.0, Y: 0.00},
+    {X: 0.5, Y: 0.48},
+    {X: 1.0, Y: 0.84},
+    {X: 1.5, Y: 1.00},
+})
+```
+
+> **Which constructor to use:**
+> - Named categories (months, products, labels) → `NewLineChartSingle` / `NewLineChart`
+> - Continuous numeric X values (math functions, measurements) → `NewLineChartXY`
+> - Individual data points without a connecting line → [`ScatterChart`](#scatterchart)
+
+> `Series` and `XYSeries` are mutually exclusive. Setting both on the same `LineChart` returns an error at render time.
 
 #### `PieChart`
 

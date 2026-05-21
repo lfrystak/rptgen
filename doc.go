@@ -21,10 +21,15 @@
 //	    {Label: "Professional", Value: 30},
 //	    {Label: "Starter", Value: 25},
 //	}))
+//	// Categorical X axis (string labels, evenly spaced):
 //	charts.AddElement(rptgen.NewLineChartSingle("Monthly Revenue", []rptgen.DataPoint{
 //	    {Label: "Jan", Value: 45_000},
 //	    {Label: "Feb", Value: 52_000},
 //	    {Label: "Mar", Value: 48_000},
+//	}))
+//	// Numeric X axis (linear, proportional spacing) — for functions or continuous data:
+//	charts.AddElement(rptgen.NewLineChartXY("Sin Wave", []rptgen.ScatterPoint{
+//	    {X: 0.0, Y: 0.00}, {X: 0.5, Y: 0.48}, {X: 1.0, Y: 0.84},
 //	}))
 //	report.AddSection(charts)
 //
