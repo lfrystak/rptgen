@@ -861,7 +861,7 @@ func TestCustomHTMLRendererElement(t *testing.T) {
 func TestScatterChartRenders(t *testing.T) {
 	r := NewReport("Scatter")
 	section := &Section{Title: "Metrics"}
-	section.AddElement(NewScatterChart("Points", []ScatterPoint{
+	section.AddElement(NewScatterChart("Points", []XYPoint{
 		{X: 1, Y: 2},
 		{X: 3, Y: 4},
 		{X: 5, Y: 6},
@@ -891,7 +891,7 @@ func TestScatterChartScript(t *testing.T) {
 		SectionTitle: "sec",
 		idGen:        gen,
 	}
-	chart := NewScatterChart("XY", []ScatterPoint{{X: 10, Y: 20}, {X: 30, Y: 40}})
+	chart := NewScatterChart("XY", []XYPoint{{X: 10, Y: 20}, {X: 30, Y: 40}})
 	_, scripts, err := chart.RenderHTML(ctx)
 	if err != nil {
 		t.Fatalf("RenderHTML: %v", err)
@@ -940,7 +940,7 @@ func parseXYChartScript(t *testing.T, script string) xyChartConfig {
 
 // TestLineChartXYScriptType verifies that NewLineChartXY emits Chart.js type "line".
 func TestLineChartXYScriptType(t *testing.T) {
-	lc := NewLineChartXY("Sin", []ScatterPoint{{X: 0, Y: 0}, {X: 1, Y: 1}})
+	lc := NewLineChartXY("Sin", []XYPoint{{X: 0, Y: 0}, {X: 1, Y: 1}})
 	script, err := renderLineChartXYScript("id", lc, DefaultTheme())
 	if err != nil {
 		t.Fatalf("renderLineChartXYScript: %v", err)
@@ -953,7 +953,7 @@ func TestLineChartXYScriptType(t *testing.T) {
 
 // TestLineChartXYScriptLinearAxis verifies that the X axis scale type is "linear".
 func TestLineChartXYScriptLinearAxis(t *testing.T) {
-	lc := NewLineChartXY("Sin", []ScatterPoint{{X: 0, Y: 0}, {X: 1, Y: 1}})
+	lc := NewLineChartXY("Sin", []XYPoint{{X: 0, Y: 0}, {X: 1, Y: 1}})
 	script, err := renderLineChartXYScript("id", lc, DefaultTheme())
 	if err != nil {
 		t.Fatalf("renderLineChartXYScript: %v", err)
@@ -965,7 +965,7 @@ func TestLineChartXYScriptLinearAxis(t *testing.T) {
 
 // TestLineChartXYScriptPoints verifies that point data is emitted as {x,y} objects.
 func TestLineChartXYScriptPoints(t *testing.T) {
-	lc := NewLineChartXY("F", []ScatterPoint{{X: 1.5, Y: 2.5}, {X: 3.0, Y: 4.0}})
+	lc := NewLineChartXY("F", []XYPoint{{X: 1.5, Y: 2.5}, {X: 3.0, Y: 4.0}})
 	script, err := renderLineChartXYScript("id", lc, DefaultTheme())
 	if err != nil {
 		t.Fatalf("renderLineChartXYScript: %v", err)
@@ -988,7 +988,7 @@ func TestLineChartXYScriptPoints(t *testing.T) {
 
 // TestLineChartXYScriptShowPointsFalse verifies that ShowPoints=false hides data-point dots.
 func TestLineChartXYScriptShowPointsFalse(t *testing.T) {
-	lc := NewLineChartXY("F", []ScatterPoint{{X: 0, Y: 0}})
+	lc := NewLineChartXY("F", []XYPoint{{X: 0, Y: 0}})
 	lc.ShowPoints = false
 	script, err := renderLineChartXYScript("id", lc, DefaultTheme())
 	if err != nil {
@@ -1010,7 +1010,7 @@ func TestLineChartXYScriptShowPointsFalse(t *testing.T) {
 // TestLineChartXYScriptLegendSingleSeries verifies that a single-series XY chart
 // hides the legend by default (consistent with categorical single-series behaviour).
 func TestLineChartXYScriptLegendSingleSeries(t *testing.T) {
-	lc := NewLineChartXY("F", []ScatterPoint{{X: 0, Y: 1}})
+	lc := NewLineChartXY("F", []XYPoint{{X: 0, Y: 1}})
 	script, err := renderLineChartXYScript("id", lc, DefaultTheme())
 	if err != nil {
 		t.Fatalf("renderLineChartXYScript: %v", err)
@@ -1027,7 +1027,7 @@ func TestLineChartXYScriptLegendSingleSeries(t *testing.T) {
 // TestLineChartXYScriptChartOptionsAxisTitles verifies that ChartOptions axis titles
 // are applied to XY-mode line charts and that the linear X axis type is preserved.
 func TestLineChartXYScriptChartOptionsAxisTitles(t *testing.T) {
-	lc := NewLineChartXY("Wave", []ScatterPoint{{X: 0, Y: 0}, {X: 1, Y: 1}})
+	lc := NewLineChartXY("Wave", []XYPoint{{X: 0, Y: 0}, {X: 1, Y: 1}})
 	lc.Options.XAxisTitle = "x (rad)"
 	lc.Options.YAxisTitle = "amplitude"
 
@@ -1050,7 +1050,7 @@ func TestLineChartXYScriptChartOptionsAxisTitles(t *testing.T) {
 // TestLineChartXYRenderHTMLDispatch verifies that LineChart.RenderHTML uses the XY
 // rendering path when XYSeries is populated, emitting type "line" with {x,y} data.
 func TestLineChartXYRenderHTMLDispatch(t *testing.T) {
-	lc := NewLineChartXY("Cos", []ScatterPoint{{X: 0, Y: 1}, {X: 3, Y: -1}})
+	lc := NewLineChartXY("Cos", []XYPoint{{X: 0, Y: 1}, {X: 3, Y: -1}})
 	gen := newIDGen()
 	ctx := &HTMLRenderContext{
 		Theme:        DefaultTheme(),

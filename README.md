@@ -304,11 +304,11 @@ Each `XYLineSeries` has:
 | Field    | Type              | Description                             |
 |----------|-------------------|-----------------------------------------|
 | `Name`   | `string`          | Series label in legend.                 |
-| `Points` | `[]ScatterPoint`  | Ordered `{X, Y}` coordinate pairs.     |
+| `Points` | `[]XYPoint`  | Ordered `{X, Y}` coordinate pairs.     |
 
 ```go
 // Single series (XY / numeric axis)
-chart := rptgen.NewLineChartXY("Sin Wave", []rptgen.ScatterPoint{
+chart := rptgen.NewLineChartXY("Sin Wave", []rptgen.XYPoint{
     {X: 0.0, Y: 0.00},
     {X: 0.5, Y: 0.48},
     {X: 1.0, Y: 0.84},
@@ -375,11 +375,11 @@ Scatter plot where each point is an independent `{X, Y}` coordinate pair.
 | Field    | Type             | Description                          |
 |----------|------------------|--------------------------------------|
 | `Title`  | `string`         | Chart heading.                       |
-| `Points` | `[]ScatterPoint` | Ordered slice of `{X, Y}` points.   |
+| `Points` | `[]XYPoint` | Ordered slice of `{X, Y}` points.   |
 | `Tooltip`| `string`         | Hover text on the chart card.        |
 
 ```go
-chart := rptgen.NewScatterChart("Correlation", []rptgen.ScatterPoint{
+chart := rptgen.NewScatterChart("Correlation", []rptgen.XYPoint{
     {X: 1.2, Y: 3.4},
     {X: 2.5, Y: 5.1},
     {X: 3.7, Y: 4.8},

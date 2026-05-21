@@ -28,7 +28,7 @@
 //	    {Label: "Mar", Value: 48_000},
 //	}))
 //	// Numeric X axis (linear, proportional spacing) — for functions or continuous data:
-//	charts.AddElement(rptgen.NewLineChartXY("Sin Wave", []rptgen.ScatterPoint{
+//	charts.AddElement(rptgen.NewLineChartXY("Sin Wave", []rptgen.XYPoint{
 //	    {X: 0.0, Y: 0.00}, {X: 0.5, Y: 0.48}, {X: 1.0, Y: 0.84},
 //	}))
 //	report.AddSection(charts)

@@ -39,7 +39,7 @@ func TestNewLineChart(t *testing.T) {
 }
 
 func TestNewLineChartXY(t *testing.T) {
-	pts := []ScatterPoint{{X: 0.0, Y: 0.0}, {X: 1.0, Y: 1.0}, {X: 2.0, Y: 4.0}}
+	pts := []XYPoint{{X: 0.0, Y: 0.0}, {X: 1.0, Y: 1.0}, {X: 2.0, Y: 4.0}}
 	lc := NewLineChartXY("Parabola", pts)
 
 	if lc.Title != "Parabola" {

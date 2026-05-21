@@ -121,7 +121,7 @@ type xyDataset struct {
 }
 
 // xyPoint is the internal JSON representation of a Chart.js {x,y} data point.
-// It maps directly to the public ScatterPoint type.
+// It maps directly to the public XYPoint type.
 type xyPoint struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`

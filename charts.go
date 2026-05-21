@@ -104,7 +104,7 @@ type LineSeries struct {
 // is linear so point spacing reflects actual X values rather than category order.
 type XYLineSeries struct {
 	Name   string
-	Points []ScatterPoint
+	Points []XYPoint
 }
 
 // LineChart displays a line chart with one or more series.
@@ -163,7 +163,7 @@ func NewLineChartSingle(title string, points []DataPoint) *LineChart {
 // This is the same engine as the categorical LineChart but with a numeric axis.
 // [ScatterChart] (dots only, no connecting line) remains the right choice when
 // you want to show individual data points without a line.
-func NewLineChartXY(title string, points []ScatterPoint) *LineChart {
+func NewLineChartXY(title string, points []XYPoint) *LineChart {
 	return &LineChart{
 		ChartBase:  ChartBase{Title: title},
 		XYSeries:   []XYLineSeries{{Name: title, Points: points}},
@@ -211,8 +211,8 @@ func NewStackedBarChart(title string, series []StackedBarSeries) *StackedBarChar
 	}
 }
 
-// ScatterPoint is an X/Y coordinate for ScatterChart.
-type ScatterPoint struct {
+// XYPoint is a numeric X/Y coordinate pair used by [ScatterChart] and the XY mode of [LineChart].
+type XYPoint struct {
 	X float64
 	Y float64
 }
@@ -224,13 +224,13 @@ type ScatterPoint struct {
 // by implementing HTMLRenderer on its own struct without touching renderElement.
 type ScatterChart struct {
 	ChartBase
-	Points []ScatterPoint
+	Points []XYPoint
 }
 
 func (s *ScatterChart) ElementType() string { return "ScatterChart" }
 
 // NewScatterChart creates a scatter chart with the given X/Y data points.
-func NewScatterChart(title string, points []ScatterPoint) *ScatterChart {
+func NewScatterChart(title string, points []XYPoint) *ScatterChart {
 	return &ScatterChart{
 		ChartBase: ChartBase{Title: title},
 		Points:    points,
