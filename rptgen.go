@@ -146,3 +146,10 @@ type HTMLRenderer interface {
 type Renderer interface {
 	Render(w io.Writer, report *Report, theme *Theme) error
 }
+
+// Ptr returns a pointer to v. Use it to set optional pointer fields in
+// ChartOptions and similar structs without declaring a temporary variable:
+//
+//	opts.ShowTooltips = rptgen.Ptr(false)
+//	opts.YMin = rptgen.Ptr(0.0)
+func Ptr[T any](v T) *T { return &v }

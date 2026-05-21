@@ -55,7 +55,7 @@ type ChartOptions struct {
 
 	// ShowTooltips controls whether Chart.js data-point tooltips are shown.
 	// Nil preserves the Chart.js default (enabled).
-	// Set to a pointer to false to disable: opts.ShowTooltips = rptgen.BoolPtr(false)
+	// Set to a pointer to false to disable: opts.ShowTooltips = rptgen.Ptr(false)
 	ShowTooltips *bool
 
 	// AspectRatio overrides the chart's width-to-height ratio.
