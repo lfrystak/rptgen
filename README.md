@@ -177,6 +177,8 @@ html := rptgen.NewFreeText("<p>Rich <strong>HTML</strong> content.</p>")
 html.IsHTML = true
 ```
 
+> **Styling note:** The report CSS automatically adds `0.75rem` of spacing between consecutive `<p>` elements inside a free-text card. Heading elements (`<h1>`–`<h6>`) receive `1rem` of top margin and `0.25rem` of bottom margin, so headings sit close to the paragraph that follows them. Both rules only apply within `.free-text` and do not affect the rest of the document.
+
 #### `Table`
 
 Displays tabular data with a header row.
@@ -231,12 +233,13 @@ Charts are rendered using Chart.js, embedded inline — no CDN calls required.
 
 Single-series vertical or horizontal bar chart.
 
-| Field          | Type            | Description                                                     |
-|----------------|-----------------|-----------------------------------------------------------------|
-| `Title`        | `string`        | Chart heading.                                                  |
-| `Data`         | `[]DataPoint`   | Ordered label-value pairs. Axis order matches slice order.      |
-| `IsHorizontal` | `bool`          | Render bars horizontally if `true`.                             |
-| `Tooltip`      | `string`        | Hover text on the chart card.                                   |
+| Field            | Type            | Description                                                                                        |
+|------------------|-----------------|----------------------------------------------------------------------------------------------------|
+| `Title`          | `string`        | Chart heading.                                                                                     |
+| `Data`           | `[]DataPoint`   | Ordered label-value pairs. Axis order matches slice order.                                         |
+| `IsHorizontal`   | `bool`          | Render bars horizontally if `true`.                                                                |
+| `UniformColor`   | `bool`          | If `true`, all bars are rendered in the theme's `PrimaryColor` instead of cycling the chart palette. Useful when color variation would falsely imply a categorical distinction. |
+| `Tooltip`        | `string`        | Hover text on the chart card.                                                                      |
 
 ```go
 chart := rptgen.NewBarChart("Sales by Region", []rptgen.DataPoint{
@@ -246,6 +249,10 @@ chart := rptgen.NewBarChart("Sales by Region", []rptgen.DataPoint{
     {Label: "Latin America", Value: 67000},
 })
 chart.IsHorizontal = true
+
+// Single-metric chart: all bars in the theme's primary color
+usage := rptgen.NewBarChart("Daily Active Users", data)
+usage.UniformColor = true
 ```
 
 > **Ordering note:** `[]DataPoint` preserves the order you specify.
@@ -433,7 +440,7 @@ Pass `nil` as the theme to use `DefaultTheme()` with no overrides.
 
 | Field             | Type       | Default                      | Description                                                         |
 |-------------------|------------|------------------------------|---------------------------------------------------------------------|
-| `PrimaryColor`    | `string`   | `#2563eb`                    | Headings, accents.                                                  |
+| `PrimaryColor`    | `string`   | `#2563eb`                    | Headings, accents, and bar color when `BarChart.UniformColor` is `true`. |
 | `SecondaryColor`  | `string`   | `#64748b`                    | Secondary text and borders.                                         |
 | `BackgroundColor` | `string`   | `#f1f5f9`                    | Page background.                                                    |
 | `CardColor`       | `string`   | `#ffffff`                    | Element card/tile background.                                       |
