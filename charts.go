@@ -81,6 +81,10 @@ type BarChart struct {
 	ChartBase
 	Data         []DataPoint
 	IsHorizontal bool
+	// UniformColor, when true, renders all bars in the theme's PrimaryColor instead of
+	// cycling through the chart color palette. Useful for single-metric charts where
+	// color variation would imply a categorical distinction that doesn't exist.
+	UniformColor bool
 }
 
 func (b *BarChart) ElementType() string { return "BarChart" }
@@ -130,6 +134,9 @@ type LineChart struct {
 	Series     []LineSeries   // categorical mode: string labels on X axis
 	XYSeries   []XYLineSeries // XY mode: numeric X axis; mutually exclusive with Series
 	ShowPoints bool           // default: true
+	// LineWidth sets the stroke width of the line in pixels.
+	// Nil uses the Chart.js default (3). Use rptgen.Ptr(1.5) for a thinner line.
+	LineWidth *float64
 }
 
 func (l *LineChart) ElementType() string { return "LineChart" }

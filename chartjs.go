@@ -58,6 +58,7 @@ type chartDataset struct {
 	Data            []float64 `json:"data"`
 	BackgroundColor any       `json:"backgroundColor,omitempty"`
 	BorderColor     any       `json:"borderColor,omitempty"`
+	BorderWidth     *float64  `json:"borderWidth,omitempty"`
 	Fill            *bool     `json:"fill,omitempty"`
 	Tension         *float64  `json:"tension,omitempty"`
 	PointStyle      *bool     `json:"pointStyle,omitempty"`

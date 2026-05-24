@@ -107,6 +107,7 @@ type xyDataset struct {
 	Data            []xyPoint `json:"data"`
 	BackgroundColor string    `json:"backgroundColor,omitempty"`
 	BorderColor     string    `json:"borderColor,omitempty"`
+	BorderWidth     *float64  `json:"borderWidth,omitempty"`
 	Fill            *bool     `json:"fill,omitempty"`
 	Tension         *float64  `json:"tension,omitempty"`
 	PointStyle      *bool     `json:"pointStyle,omitempty"`
@@ -127,7 +128,11 @@ func renderBarChartScript(id string, e *BarChart, theme *Theme) (string, error) 
 	for i, dp := range e.Data {
 		labels[i] = dp.Label
 		data[i] = dp.Value
-		bgColors[i] = colors[i%len(colors)]
+		if e.UniformColor {
+			bgColors[i] = theme.PrimaryColor
+		} else {
+			bgColors[i] = colors[i%len(colors)]
+		}
 	}
 
 	indexAxis := ""
@@ -186,6 +191,7 @@ func renderLineChartScript(id string, e *LineChart, theme *Theme) (string, error
 			Data:            data,
 			BackgroundColor: color,
 			BorderColor:     color,
+			BorderWidth:     e.LineWidth,
 			Fill:            &falseVal,
 			Tension:         &tension,
 		}
@@ -314,6 +320,7 @@ func renderLineChartXYScript(id string, e *LineChart, theme *Theme) (string, err
 			Data:            points,
 			BackgroundColor: color,
 			BorderColor:     color,
+			BorderWidth:     e.LineWidth,
 			Fill:            &falseVal,
 			Tension:         &tension,
 		}

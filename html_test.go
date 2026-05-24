@@ -328,6 +328,33 @@ func TestBarChartScriptLabelsAndData(t *testing.T) {
 	}
 }
 
+func TestBarChartUniformColor(t *testing.T) {
+	theme := DefaultTheme()
+	chart := NewBarChart("Sales", []DataPoint{
+		{Label: "A", Value: 10},
+		{Label: "B", Value: 20},
+		{Label: "C", Value: 30},
+	})
+	chart.UniformColor = true
+	script, err := renderBarChartScript("id", chart, theme)
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
+	if len(cfg.Data.Datasets) != 1 {
+		t.Fatalf("Datasets: got %d, want 1", len(cfg.Data.Datasets))
+	}
+	bgColors, ok := cfg.Data.Datasets[0].BackgroundColor.([]any)
+	if !ok {
+		t.Fatalf("BackgroundColor: expected []any, got %T", cfg.Data.Datasets[0].BackgroundColor)
+	}
+	for i, c := range bgColors {
+		if c != theme.PrimaryColor {
+			t.Errorf("bgColors[%d]: got %q, want PrimaryColor %q", i, c, theme.PrimaryColor)
+		}
+	}
+}
+
 func TestBarChartPreservesInsertionOrder(t *testing.T) {
 	chart := NewBarChart("Months", []DataPoint{
 		{Label: "Mar", Value: 3},
@@ -471,6 +498,42 @@ func TestLineChartScriptMultiSeriesLabels(t *testing.T) {
 	if cfg.Data.Datasets[0].Label != "Alpha" || cfg.Data.Datasets[1].Label != "Beta" {
 		t.Errorf("Dataset labels: got [%q %q], want [Alpha Beta]",
 			cfg.Data.Datasets[0].Label, cfg.Data.Datasets[1].Label)
+	}
+}
+
+func TestLineChartScriptLineWidth(t *testing.T) {
+	lc := NewLineChartSingle("S", []DataPoint{{Label: "Jan", Value: 1}})
+	lc.LineWidth = Ptr(1.5)
+	script, err := renderLineChartScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartScript: %v", err)
+	}
+	if !strings.Contains(script, `"borderWidth":1.5`) {
+		t.Errorf("script must contain borderWidth:1.5; got: %s", script)
+	}
+}
+
+func TestLineChartXYScriptLineWidth(t *testing.T) {
+	lc := NewLineChartXY("F", []XYPoint{{X: 0, Y: 1}})
+	lc.LineWidth = Ptr(1.0)
+	script, err := renderLineChartXYScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartXYScript: %v", err)
+	}
+	if !strings.Contains(script, `"borderWidth":1`) {
+		t.Errorf("script must contain borderWidth:1; got: %s", script)
+	}
+}
+
+func TestLineChartScriptLineWidthNilOmitted(t *testing.T) {
+	lc := NewLineChartSingle("S", []DataPoint{{Label: "Jan", Value: 1}})
+	// LineWidth is nil by default
+	script, err := renderLineChartScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartScript: %v", err)
+	}
+	if strings.Contains(script, `"borderWidth"`) {
+		t.Errorf("borderWidth must be absent when LineWidth is nil; got: %s", script)
 	}
 }
 

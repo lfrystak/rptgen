@@ -231,12 +231,13 @@ Charts are rendered using Chart.js, embedded inline — no CDN calls required.
 
 Single-series vertical or horizontal bar chart.
 
-| Field          | Type            | Description                                                     |
-|----------------|-----------------|-----------------------------------------------------------------|
-| `Title`        | `string`        | Chart heading.                                                  |
-| `Data`         | `[]DataPoint`   | Ordered label-value pairs. Axis order matches slice order.      |
-| `IsHorizontal` | `bool`          | Render bars horizontally if `true`.                             |
-| `Tooltip`      | `string`        | Hover text on the chart card.                                   |
+| Field            | Type            | Description                                                                                        |
+|------------------|-----------------|----------------------------------------------------------------------------------------------------|
+| `Title`          | `string`        | Chart heading.                                                                                     |
+| `Data`           | `[]DataPoint`   | Ordered label-value pairs. Axis order matches slice order.                                         |
+| `IsHorizontal`   | `bool`          | Render bars horizontally if `true`.                                                                |
+| `UniformColor`   | `bool`          | If `true`, all bars are rendered in the theme's `PrimaryColor` instead of cycling the chart palette. Useful when color variation would falsely imply a categorical distinction. |
+| `Tooltip`        | `string`        | Hover text on the chart card.                                                                      |
 
 ```go
 chart := rptgen.NewBarChart("Sales by Region", []rptgen.DataPoint{
@@ -246,6 +247,10 @@ chart := rptgen.NewBarChart("Sales by Region", []rptgen.DataPoint{
     {Label: "Latin America", Value: 67000},
 })
 chart.IsHorizontal = true
+
+// Single-metric chart: all bars in the theme's primary color
+usage := rptgen.NewBarChart("Daily Active Users", data)
+usage.UniformColor = true
 ```
 
 > **Ordering note:** `[]DataPoint` preserves the order you specify.
@@ -264,6 +269,7 @@ Use this for named categories such as months, quarters, or product names.
 | `Title`      | `string`       | Chart heading.                                      |
 | `Series`     | `[]LineSeries` | Ordered slice of series (preserves legend order).   |
 | `ShowPoints` | `bool`         | Show data point dots. Default: `true`.              |
+| `LineWidth`  | `*float64`     | Stroke width in pixels. Nil = Chart.js default (3). Use `rptgen.Ptr(1.5)` for a thinner line. |
 | `Tooltip`    | `string`       | Hover text on the chart card.                       |
 
 Each `LineSeries` has:
@@ -297,6 +303,7 @@ or any data where X is a continuous number.
 | `Title`      | `string`         | Chart heading.                                        |
 | `XYSeries`   | `[]XYLineSeries` | Ordered slice of series (preserves legend order).     |
 | `ShowPoints` | `bool`           | Show data point dots. Default: `true`.                |
+| `LineWidth`  | `*float64`       | Stroke width in pixels. Nil = Chart.js default (3). Use `rptgen.Ptr(1.5)` for a thinner line. |
 | `Tooltip`    | `string`         | Hover text on the chart card.                         |
 
 Each `XYLineSeries` has:
@@ -433,7 +440,7 @@ Pass `nil` as the theme to use `DefaultTheme()` with no overrides.
 
 | Field             | Type       | Default                      | Description                                                         |
 |-------------------|------------|------------------------------|---------------------------------------------------------------------|
-| `PrimaryColor`    | `string`   | `#2563eb`                    | Headings, accents.                                                  |
+| `PrimaryColor`    | `string`   | `#2563eb`                    | Headings, accents, and bar color when `BarChart.UniformColor` is `true`. |
 | `SecondaryColor`  | `string`   | `#64748b`                    | Secondary text and borders.                                         |
 | `BackgroundColor` | `string`   | `#f1f5f9`                    | Page background.                                                    |
 | `CardColor`       | `string`   | `#ffffff`                    | Element card/tile background.                                       |
