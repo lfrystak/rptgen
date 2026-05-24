@@ -64,7 +64,8 @@ body {
   background: {{.CardColor}};
   border-radius: {{.BorderRadius}};
   box-shadow: {{.Shadow}};
-  position: relative;{{if .EnableAnimations}}
+  position: relative;
+  min-width: 0;{{if .EnableAnimations}}
   animation: fadeIn 0.3s ease;{{end}}
 }
 .tile {
@@ -130,6 +131,7 @@ tbody tr:hover td {
   line-height: 1.6;
 }
 .free-text p { margin: 0; }
+.free-text p + p { margin-top: 0.75rem; }
 .tooltip-icon {
   position: absolute;
   top: 0.5rem;
