@@ -269,6 +269,7 @@ Use this for named categories such as months, quarters, or product names.
 | `Title`      | `string`       | Chart heading.                                      |
 | `Series`     | `[]LineSeries` | Ordered slice of series (preserves legend order).   |
 | `ShowPoints` | `bool`         | Show data point dots. Default: `true`.              |
+| `LineWidth`  | `*float64`     | Stroke width in pixels. Nil = Chart.js default (3). Use `rptgen.Ptr(1.5)` for a thinner line. |
 | `Tooltip`    | `string`       | Hover text on the chart card.                       |
 
 Each `LineSeries` has:
@@ -302,6 +303,7 @@ or any data where X is a continuous number.
 | `Title`      | `string`         | Chart heading.                                        |
 | `XYSeries`   | `[]XYLineSeries` | Ordered slice of series (preserves legend order).     |
 | `ShowPoints` | `bool`           | Show data point dots. Default: `true`.                |
+| `LineWidth`  | `*float64`       | Stroke width in pixels. Nil = Chart.js default (3). Use `rptgen.Ptr(1.5)` for a thinner line. |
 | `Tooltip`    | `string`         | Hover text on the chart card.                         |
 
 Each `XYLineSeries` has:

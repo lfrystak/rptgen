@@ -54,13 +54,14 @@ type chartData struct {
 }
 
 type chartDataset struct {
-	Label           string    `json:"label,omitempty"`
+	Label           string   `json:"label,omitempty"`
 	Data            []float64 `json:"data"`
-	BackgroundColor any       `json:"backgroundColor,omitempty"`
-	BorderColor     any       `json:"borderColor,omitempty"`
-	Fill            *bool     `json:"fill,omitempty"`
-	Tension         *float64  `json:"tension,omitempty"`
-	PointStyle      *bool     `json:"pointStyle,omitempty"`
+	BackgroundColor any      `json:"backgroundColor,omitempty"`
+	BorderColor     any      `json:"borderColor,omitempty"`
+	BorderWidth     *float64 `json:"borderWidth,omitempty"`
+	Fill            *bool    `json:"fill,omitempty"`
+	Tension         *float64 `json:"tension,omitempty"`
+	PointStyle      *bool    `json:"pointStyle,omitempty"`
 }
 
 // chartOptions holds Chart.js options common to the built-in chart types.

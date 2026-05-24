@@ -134,6 +134,9 @@ type LineChart struct {
 	Series     []LineSeries   // categorical mode: string labels on X axis
 	XYSeries   []XYLineSeries // XY mode: numeric X axis; mutually exclusive with Series
 	ShowPoints bool           // default: true
+	// LineWidth sets the stroke width of the line in pixels.
+	// Nil uses the Chart.js default (3). Use rptgen.Ptr(1.5) for a thinner line.
+	LineWidth *float64
 }
 
 func (l *LineChart) ElementType() string { return "LineChart" }

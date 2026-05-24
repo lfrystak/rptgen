@@ -501,6 +501,42 @@ func TestLineChartScriptMultiSeriesLabels(t *testing.T) {
 	}
 }
 
+func TestLineChartScriptLineWidth(t *testing.T) {
+	lc := NewLineChartSingle("S", []DataPoint{{Label: "Jan", Value: 1}})
+	lc.LineWidth = Ptr(1.5)
+	script, err := renderLineChartScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartScript: %v", err)
+	}
+	if !strings.Contains(script, `"borderWidth":1.5`) {
+		t.Errorf("script must contain borderWidth:1.5; got: %s", script)
+	}
+}
+
+func TestLineChartXYScriptLineWidth(t *testing.T) {
+	lc := NewLineChartXY("F", []XYPoint{{X: 0, Y: 1}})
+	lc.LineWidth = Ptr(1.0)
+	script, err := renderLineChartXYScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartXYScript: %v", err)
+	}
+	if !strings.Contains(script, `"borderWidth":1`) {
+		t.Errorf("script must contain borderWidth:1; got: %s", script)
+	}
+}
+
+func TestLineChartScriptLineWidthNilOmitted(t *testing.T) {
+	lc := NewLineChartSingle("S", []DataPoint{{Label: "Jan", Value: 1}})
+	// LineWidth is nil by default
+	script, err := renderLineChartScript("id", lc, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderLineChartScript: %v", err)
+	}
+	if strings.Contains(script, `"borderWidth"`) {
+		t.Errorf("borderWidth must be absent when LineWidth is nil; got: %s", script)
+	}
+}
+
 func TestLineChartScriptShowPointsFalse(t *testing.T) {
 	lc := NewLineChartSingle("S", []DataPoint{{Label: "Jan", Value: 1}})
 	lc.ShowPoints = false
