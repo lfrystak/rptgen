@@ -81,6 +81,10 @@ type BarChart struct {
 	ChartBase
 	Data         []DataPoint
 	IsHorizontal bool
+	// UniformColor, when true, renders all bars in the theme's PrimaryColor instead of
+	// cycling through the chart color palette. Useful for single-metric charts where
+	// color variation would imply a categorical distinction that doesn't exist.
+	UniformColor bool
 }
 
 func (b *BarChart) ElementType() string { return "BarChart" }

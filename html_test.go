@@ -328,6 +328,33 @@ func TestBarChartScriptLabelsAndData(t *testing.T) {
 	}
 }
 
+func TestBarChartUniformColor(t *testing.T) {
+	theme := DefaultTheme()
+	chart := NewBarChart("Sales", []DataPoint{
+		{Label: "A", Value: 10},
+		{Label: "B", Value: 20},
+		{Label: "C", Value: 30},
+	})
+	chart.UniformColor = true
+	script, err := renderBarChartScript("id", chart, theme)
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
+	if len(cfg.Data.Datasets) != 1 {
+		t.Fatalf("Datasets: got %d, want 1", len(cfg.Data.Datasets))
+	}
+	bgColors, ok := cfg.Data.Datasets[0].BackgroundColor.([]any)
+	if !ok {
+		t.Fatalf("BackgroundColor: expected []any, got %T", cfg.Data.Datasets[0].BackgroundColor)
+	}
+	for i, c := range bgColors {
+		if c != theme.PrimaryColor {
+			t.Errorf("bgColors[%d]: got %q, want PrimaryColor %q", i, c, theme.PrimaryColor)
+		}
+	}
+}
+
 func TestBarChartPreservesInsertionOrder(t *testing.T) {
 	chart := NewBarChart("Months", []DataPoint{
 		{Label: "Mar", Value: 3},

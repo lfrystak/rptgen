@@ -127,7 +127,11 @@ func renderBarChartScript(id string, e *BarChart, theme *Theme) (string, error) 
 	for i, dp := range e.Data {
 		labels[i] = dp.Label
 		data[i] = dp.Value
-		bgColors[i] = colors[i%len(colors)]
+		if e.UniformColor {
+			bgColors[i] = theme.PrimaryColor
+		} else {
+			bgColors[i] = colors[i%len(colors)]
+		}
 	}
 
 	indexAxis := ""
