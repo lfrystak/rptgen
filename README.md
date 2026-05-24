@@ -177,8 +177,6 @@ html := rptgen.NewFreeText("<p>Rich <strong>HTML</strong> content.</p>")
 html.IsHTML = true
 ```
 
-> **Styling note:** The report CSS automatically adds `0.75rem` of spacing between consecutive `<p>` elements inside a free-text card. Heading elements (`<h1>`–`<h6>`) receive `1rem` of top margin and `0.25rem` of bottom margin, so headings sit close to the paragraph that follows them. Both rules only apply within `.free-text` and do not affect the rest of the document.
-
 #### `Table`
 
 Displays tabular data with a header row.
