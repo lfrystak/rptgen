@@ -468,7 +468,6 @@ func TestBarChartOutlinedStyle(t *testing.T) {
 	assertRGBAColors(t, "hoverBackgroundColor", ds.HoverBackgroundColor)
 }
 
-
 func TestBarChartOutlinedFalseNoExtraFields(t *testing.T) {
 	chart := NewBarChart("Sales", []DataPoint{{Label: "A", Value: 10}})
 	// Outlined defaults to false
