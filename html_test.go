@@ -421,6 +421,106 @@ func TestLineChartSinglePreservesInsertionOrder(t *testing.T) {
 	}
 }
 
+// assertRGBAColors asserts that v is a []any whose every element is an rgba() CSS string.
+func assertRGBAColors(t *testing.T, field string, v any) {
+	t.Helper()
+	colors, ok := v.([]any)
+	if !ok {
+		t.Fatalf("%s: expected []any, got %T", field, v)
+	}
+	for i, c := range colors {
+		s, ok := c.(string)
+		if !ok || !strings.HasPrefix(s, "rgba(") {
+			t.Errorf("%s[%d]: got %q, want rgba(...) string", field, i, c)
+		}
+	}
+}
+
+func TestBarChartOutlinedStyle(t *testing.T) {
+	theme := DefaultTheme()
+	chart := NewBarChart("Sales", []DataPoint{
+		{Label: "A", Value: 10},
+		{Label: "B", Value: 20},
+	})
+	chart.Outlined = true
+	script, err := renderBarChartScript("id", chart, theme)
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	cfg := parseChartScript(t, script)
+	if len(cfg.Data.Datasets) != 1 {
+		t.Fatalf("Datasets: got %d, want 1", len(cfg.Data.Datasets))
+	}
+	ds := cfg.Data.Datasets[0]
+
+	assertRGBAColors(t, "backgroundColor", ds.BackgroundColor)
+
+	if ds.BorderColor == nil {
+		t.Fatal("BorderColor must be set for outlined bars")
+	}
+	if ds.BorderWidth == nil || *ds.BorderWidth != 2 {
+		t.Errorf("BorderWidth: got %v, want 2", ds.BorderWidth)
+	}
+	if ds.BorderRadius == nil || *ds.BorderRadius != 0 {
+		t.Errorf("BorderRadius: got %v, want 0", ds.BorderRadius)
+	}
+
+	assertRGBAColors(t, "hoverBackgroundColor", ds.HoverBackgroundColor)
+}
+
+func TestBarChartOutlinedFalseNoExtraFields(t *testing.T) {
+	chart := NewBarChart("Sales", []DataPoint{{Label: "A", Value: 10}})
+	// Outlined defaults to false
+	script, err := renderBarChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	if strings.Contains(script, `"borderRadius"`) {
+		t.Error("borderRadius must not appear when Outlined is false")
+	}
+	if strings.Contains(script, `"hoverBackgroundColor"`) {
+		t.Error("hoverBackgroundColor must not appear when Outlined is false")
+	}
+}
+
+func TestBarChartOutlinedBgLessOpaqueThanHover(t *testing.T) {
+	chart := NewBarChart("Sales", []DataPoint{{Label: "A", Value: 10}})
+	chart.Outlined = true
+	script, err := renderBarChartScript("id", chart, DefaultTheme())
+	if err != nil {
+		t.Fatalf("renderBarChartScript: %v", err)
+	}
+	// backgroundColor must contain the base alpha (0.15)
+	if !strings.Contains(script, `"rgba(37,99,235,0.15)"`) {
+		t.Errorf("backgroundColor must use alpha 0.15; got: %s", script)
+	}
+	// hoverBackgroundColor must contain double the alpha (0.3)
+	if !strings.Contains(script, `"rgba(37,99,235,0.3)"`) {
+		t.Errorf("hoverBackgroundColor must use alpha 0.3; got: %s", script)
+	}
+}
+
+func TestHexToRGBA(t *testing.T) {
+	cases := []struct {
+		hex   string
+		alpha float64
+		want  string
+	}{
+		{"#2563eb", 0.15, "rgba(37,99,235,0.15)"},
+		{"#10b981", 0.2, "rgba(16,185,129,0.2)"},
+		{"#ffffff", 1.0, "rgba(255,255,255,1)"},
+		{"#000000", 0.5, "rgba(0,0,0,0.5)"},
+		{"invalid", 0.5, "rgba(0,0,0,0.5)"},
+		{"#abc", 0.5, "rgba(0,0,0,0.5)"},
+	}
+	for _, tc := range cases {
+		got := hexToRGBA(tc.hex, tc.alpha)
+		if got != tc.want {
+			t.Errorf("hexToRGBA(%q, %v): got %q, want %q", tc.hex, tc.alpha, got, tc.want)
+		}
+	}
+}
+
 func TestBarChartScriptHorizontal(t *testing.T) {
 	chart := &BarChart{
 		ChartBase:    ChartBase{Title: "H"},

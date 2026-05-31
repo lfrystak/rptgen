@@ -237,6 +237,7 @@ Single-series vertical or horizontal bar chart.
 | `Data`           | `[]DataPoint`   | Ordered label-value pairs. Axis order matches slice order.                                         |
 | `IsHorizontal`   | `bool`          | Render bars horizontally if `true`.                                                                |
 | `UniformColor`   | `bool`          | If `true`, all bars are rendered in the theme's `PrimaryColor` instead of cycling the chart palette. Useful when color variation would falsely imply a categorical distinction. |
+| `Outlined`       | `bool`          | If `true`, bars are rendered with a semi-transparent fill and a solid colored border. On hover, the fill becomes less transparent. |
 | `Tooltip`        | `string`        | Hover text on the chart card.                                                                      |
 
 ```go
@@ -251,6 +252,10 @@ chart.IsHorizontal = true
 // Single-metric chart: all bars in the theme's primary color
 usage := rptgen.NewBarChart("Daily Active Users", data)
 usage.UniformColor = true
+
+// Outlined style: semi-transparent fill with a solid border
+outlined := rptgen.NewBarChart("Monthly Signups", data)
+outlined.Outlined = true
 ```
 
 > **Ordering note:** `[]DataPoint` preserves the order you specify.

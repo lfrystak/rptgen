@@ -3,6 +3,8 @@ package rptgen
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 var defaultChartColors = []string{
@@ -54,14 +56,16 @@ type chartData struct {
 }
 
 type chartDataset struct {
-	Label           string    `json:"label,omitempty"`
-	Data            []float64 `json:"data"`
-	BackgroundColor any       `json:"backgroundColor,omitempty"`
-	BorderColor     any       `json:"borderColor,omitempty"`
-	BorderWidth     *float64  `json:"borderWidth,omitempty"`
-	Fill            *bool     `json:"fill,omitempty"`
-	Tension         *float64  `json:"tension,omitempty"`
-	PointStyle      *bool     `json:"pointStyle,omitempty"`
+	Label                string    `json:"label,omitempty"`
+	Data                 []float64 `json:"data"`
+	BackgroundColor      any       `json:"backgroundColor,omitempty"`
+	BorderColor          any       `json:"borderColor,omitempty"`
+	BorderWidth          *float64  `json:"borderWidth,omitempty"`
+	BorderRadius         *float64  `json:"borderRadius,omitempty"`
+	HoverBackgroundColor any       `json:"hoverBackgroundColor,omitempty"`
+	Fill                 *bool     `json:"fill,omitempty"`
+	Tension              *float64  `json:"tension,omitempty"`
+	PointStyle           *bool     `json:"pointStyle,omitempty"`
 }
 
 // chartOptions holds Chart.js options common to the built-in chart types.
@@ -221,4 +225,20 @@ func ensureScaleY(o *chartOptions) *chartAxis {
 		o.Scales.Y = &chartAxis{}
 	}
 	return o.Scales.Y
+}
+
+// hexToRGBA converts a 6-digit hex color (#RRGGBB) to a CSS rgba() string.
+// Colors that cannot be parsed fall back to rgba(0,0,0,alpha).
+func hexToRGBA(hex string, alpha float64) string {
+	hex = strings.TrimPrefix(hex, "#")
+	if len(hex) != 6 {
+		return fmt.Sprintf("rgba(0,0,0,%g)", alpha)
+	}
+	r, err1 := strconv.ParseUint(hex[0:2], 16, 8)
+	g, err2 := strconv.ParseUint(hex[2:4], 16, 8)
+	b, err3 := strconv.ParseUint(hex[4:6], 16, 8)
+	if err1 != nil || err2 != nil || err3 != nil {
+		return fmt.Sprintf("rgba(0,0,0,%g)", alpha)
+	}
+	return fmt.Sprintf("rgba(%d,%d,%d,%g)", r, g, b, alpha)
 }
