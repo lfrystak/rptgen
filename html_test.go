@@ -421,6 +421,21 @@ func TestLineChartSinglePreservesInsertionOrder(t *testing.T) {
 	}
 }
 
+// assertRGBAColors asserts that v is a []any whose every element is an rgba() CSS string.
+func assertRGBAColors(t *testing.T, field string, v any) {
+	t.Helper()
+	colors, ok := v.([]any)
+	if !ok {
+		t.Fatalf("%s: expected []any, got %T", field, v)
+	}
+	for i, c := range colors {
+		s, ok := c.(string)
+		if !ok || !strings.HasPrefix(s, "rgba(") {
+			t.Errorf("%s[%d]: got %q, want rgba(...) string", field, i, c)
+		}
+	}
+}
+
 func TestBarChartOutlinedStyle(t *testing.T) {
 	theme := DefaultTheme()
 	chart := NewBarChart("Sales", []DataPoint{
@@ -438,49 +453,19 @@ func TestBarChartOutlinedStyle(t *testing.T) {
 	}
 	ds := cfg.Data.Datasets[0]
 
-	// backgroundColor must be rgba strings (semi-transparent fill)
-	bgColors, ok := ds.BackgroundColor.([]any)
-	if !ok {
-		t.Fatalf("BackgroundColor: expected []any, got %T", ds.BackgroundColor)
-	}
-	for i, c := range bgColors {
-		s, ok := c.(string)
-		if !ok || !strings.HasPrefix(s, "rgba(") {
-			t.Errorf("bgColors[%d]: got %q, want rgba(...) string", i, c)
-		}
-	}
+	assertRGBAColors(t, "backgroundColor", ds.BackgroundColor)
 
-	// borderColor must be set per bar
 	if ds.BorderColor == nil {
 		t.Fatal("BorderColor must be set for outlined bars")
 	}
-
-	// borderWidth must be 2
 	if ds.BorderWidth == nil || *ds.BorderWidth != 2 {
 		t.Errorf("BorderWidth: got %v, want 2", ds.BorderWidth)
 	}
-
-	// borderRadius must be 0
 	if ds.BorderRadius == nil || *ds.BorderRadius != 0 {
 		t.Errorf("BorderRadius: got %v, want 0", ds.BorderRadius)
 	}
 
-	// hoverBackgroundColor must be set
-	if ds.HoverBackgroundColor == nil {
-		t.Fatal("HoverBackgroundColor must be set for outlined bars")
-	}
-
-	// hoverBackgroundColor values must be rgba strings
-	hoverColors, ok := ds.HoverBackgroundColor.([]any)
-	if !ok {
-		t.Fatalf("HoverBackgroundColor: expected []any, got %T", ds.HoverBackgroundColor)
-	}
-	for i, c := range hoverColors {
-		s, ok := c.(string)
-		if !ok || !strings.HasPrefix(s, "rgba(") {
-			t.Errorf("hoverColors[%d]: got %q, want rgba(...) string", i, c)
-		}
-	}
+	assertRGBAColors(t, "hoverBackgroundColor", ds.HoverBackgroundColor)
 }
 
 
