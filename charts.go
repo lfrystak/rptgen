@@ -85,6 +85,9 @@ type BarChart struct {
 	// cycling through the chart color palette. Useful for single-metric charts where
 	// color variation would imply a categorical distinction that doesn't exist.
 	UniformColor bool
+	// Outlined, when true, renders bars with a semi-transparent fill, a solid colored
+	// border, and a less-transparent fill on hover.
+	Outlined bool
 }
 
 func (b *BarChart) ElementType() string { return "BarChart" }

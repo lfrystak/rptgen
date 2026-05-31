@@ -125,13 +125,23 @@ func renderBarChartScript(id string, e *BarChart, theme *Theme) (string, error) 
 	labels := make([]string, len(e.Data))
 	data := make([]float64, len(e.Data))
 	bgColors := make([]string, len(e.Data))
+	borderColors := make([]string, len(e.Data))
+	hoverColors := make([]string, len(e.Data))
 	for i, dp := range e.Data {
 		labels[i] = dp.Label
 		data[i] = dp.Value
+		var color string
 		if e.UniformColor {
-			bgColors[i] = theme.PrimaryColor
+			color = theme.PrimaryColor
 		} else {
-			bgColors[i] = colors[i%len(colors)]
+			color = colors[i%len(colors)]
+		}
+		if e.Outlined {
+			bgColors[i] = hexToRGBA(color, 0.15)
+			borderColors[i] = color
+			hoverColors[i] = hexToRGBA(color, 0.30)
+		} else {
+			bgColors[i] = color
 		}
 	}
 
@@ -140,12 +150,22 @@ func renderBarChartScript(id string, e *BarChart, theme *Theme) (string, error) 
 		indexAxis = "y"
 	}
 
+	borderWidth := 2.0
+	borderRadius := 0.0
+	ds := chartDataset{Data: data, BackgroundColor: bgColors}
+	if e.Outlined {
+		ds.BorderColor = borderColors
+		ds.BorderWidth = &borderWidth
+		ds.BorderRadius = &borderRadius
+		ds.HoverBackgroundColor = hoverColors
+	}
+
 	ratio := 2.0
 	cfg := chartConfig{
 		Type: "bar",
 		Data: chartData{
 			Labels:   labels,
-			Datasets: []chartDataset{{Data: data, BackgroundColor: bgColors}},
+			Datasets: []chartDataset{ds},
 		},
 		Options: chartOptions{
 			Responsive:  true,
